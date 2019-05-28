@@ -12,7 +12,7 @@ import java.util.Scanner;
 public class Memorisation {/** MODE MEMORISATION */
 
     /** ATTRIBUTS DE LA CLASSE Mémorisation */
-
+    //TODO : cette classe est à "transférer" dans le Main Activity. À voir ce qu'on garde.
     int nbTrajets=0;
 
 
