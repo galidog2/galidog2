@@ -13,8 +13,6 @@ public class MainActivity extends AppCompatActivity {
         //Alban
         //Thibaut
 
-        //J'écris la
-        //Baka Konte est largement surcote
-        //Zalu à tous
+        //Jsuis pas boucher et pourtant
     }
 }
