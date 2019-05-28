@@ -10,7 +10,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //Bonjour à tous les amis pour ceux qui ne me connaissent pas
-        //Vos grands mères les Netflix qui touchent des aides fixes
     }
 }
