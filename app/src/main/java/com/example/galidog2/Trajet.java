@@ -1,5 +1,9 @@
 package com.example.galidog2;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 public class Trajet {
     /** CONSTANTES UTILISEES ET A POTENTIELLEMENT MODIFIER*/
 
