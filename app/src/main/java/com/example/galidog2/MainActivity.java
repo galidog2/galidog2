@@ -19,4 +19,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //J'aime bien les poneys
+
+
+
+    // Vous savez ce qui est pire qu'un chien qui a le sida ?
 }
