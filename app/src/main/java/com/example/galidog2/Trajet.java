@@ -189,7 +189,7 @@ public class Trajet {
                     AjoutDistance((Point) listePoints.get(len -2),(Point) listePoints.get(len-1));/**initialise la distance du premier point vers le deuxième*/
                 }
                 System.out.println(listePoints);
-                TimeUnit.SECONDS.sleep(WAITING_TIME_NEXT_POINT);
+                TimeUnit.SECONDS.sleep(WAITING_TIME_NEXT_POINT) ;
             }
         }
     }
