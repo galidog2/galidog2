@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
         memorisationB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, ChoixMemorisation.class);
+                Intent intent = new Intent(MainActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);
             }
         });
