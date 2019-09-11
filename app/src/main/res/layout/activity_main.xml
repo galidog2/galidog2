@@ -58,7 +58,7 @@
         app:layout_constraintVertical_bias="0.573" />
 
     <Button
-        android:id="@+id/Description"
+        android:id="@+id/description"
         android:layout_width="132dp"
         android:layout_height="61dp"
         android:layout_marginStart="24dp"
