@@ -25,8 +25,9 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
 
         // On rend les boutons non cliquables (modes non pris en charge par Galidog2)
-        findViewById(R.id.navigation).setClickable(false);
-        findViewById(R.id.description).setClickable(false);
+        findViewById(R.id.navigation).setEnabled(false);
+        findViewById(R.id.description).setEnabled(false);
+
 
         Button memorisationB = (Button)findViewById(R.id.mémorisation);
         memorisationB.setOnClickListener(new View.OnClickListener() {
