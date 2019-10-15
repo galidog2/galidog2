@@ -10,8 +10,10 @@ import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 
+import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
@@ -49,7 +51,7 @@ public class MapActivity extends AppCompatActivity {
 
 
     /**
-     * Mise en place de la carte du
+     * Mise en place de la carte du monde
      */
     private void miseEnPlaceCarte() {
         map = (MapView) findViewById(R.id.map);
@@ -64,7 +66,7 @@ public class MapActivity extends AppCompatActivity {
 
     /**
      * Mise en place de l'overlay avec la position de l'utilisateur,
-     * Mise en place de l'interupteur pour activer ou non l'overlay
+     * Mise en place de l'interrupteur pour activer ou non l'overlay
      */
     private void miseEnPlaceMyLocationOverlay() {
         myLocationNewOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
@@ -82,6 +84,10 @@ public class MapActivity extends AppCompatActivity {
                 }
             }
         });
+        IMapController mapController = map.getController();
+        mapController.setZoom(12.5); //Zoom sur la région de Lille
+        GeoPoint startPoint = new GeoPoint(50.636895, 3.063444); //Grand'Place !!
+        mapController.setCenter(startPoint);
     }
 
     public void onResume() {
