@@ -10,9 +10,6 @@ import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.views.MapView;
@@ -23,10 +20,12 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.List;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 /**
  * Activity générant la carte pour se diriger
  */
-public class MapActivity extends AppCompatActivity{
+public class MapActivity extends AppCompatActivity {
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
@@ -61,7 +60,6 @@ public class MapActivity extends AppCompatActivity{
         overlays.add(mScaleBarOverlay);
         miseEnPlaceMyLocationOverlay();
     }
-
 
 
     /**
@@ -107,6 +105,7 @@ public class MapActivity extends AppCompatActivity{
     /**
      * Permet de récupérer un bitmap à partir d'un drawable.
      * Sert à convertir l'icon pour placer l'utilisateur
+     *
      * @param drawableRes : drawable à convertir
      * @return : le bitmap corespondant
      */
@@ -123,5 +122,4 @@ public class MapActivity extends AppCompatActivity{
     }
 }
 
-//Rien
 
