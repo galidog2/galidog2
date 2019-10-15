@@ -3,7 +3,7 @@ package com.example.galidog2;
 public class Point {
     /** CONSTANTES UTILISEES ET A POTENTIELLEMENT MODIFIER*/
 
-    private static final double LATITUDE_MIN=50.602794;/** quadriage de la cité scientifique*/
+    private static final double LATITUDE_MIN=50.602794;/** quadrillage de la cité scientifique*/
     private static final double LATITUDE_MAX=50.613183;
     private static final double LONGITUDE_MIN=3.128780;
     private static final double LONGITUDE_MAX=3.152891;
