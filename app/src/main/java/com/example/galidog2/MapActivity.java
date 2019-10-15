@@ -9,6 +9,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+import android.widget.Toast;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
@@ -16,10 +17,13 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
+import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,6 +36,8 @@ public class MapActivity extends AppCompatActivity {
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
     private final String TAG = "Galidog2";
+    private CompassOverlay compassOverlay;
+    private List<OverlayItem> mItems = new ArrayList<OverlayItem>();
 
 
     @Override
@@ -47,6 +53,8 @@ public class MapActivity extends AppCompatActivity {
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
 
+        //Ajout des points
+        ajoutPointInteret();
     }
 
 
@@ -61,6 +69,10 @@ public class MapActivity extends AppCompatActivity {
         ScaleBarOverlay mScaleBarOverlay = new ScaleBarOverlay(map);
         overlays.add(mScaleBarOverlay);
         miseEnPlaceMyLocationOverlay();
+        IMapController mapController = map.getController();
+        mapController.setZoom(12.5); //Zoom sur la région de Lille
+        GeoPoint startPoint = new GeoPoint(50.636895, 3.063444); //Grand'Place : 50.636895, 3.063444
+        mapController.setCenter(startPoint);
     }
 
 
@@ -73,21 +85,23 @@ public class MapActivity extends AppCompatActivity {
         myLocationNewOverlay.enableFollowLocation();
         myLocationNewOverlay.enableMyLocation();
         map.getOverlays().add(myLocationNewOverlay);
+        //Bouton 'Ma Localisation' on/off
         switchMyLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     Log.i(TAG, "onCheckedChanged: ");
                     myLocationNewOverlay.enableMyLocation();
+                    map.getController().animateTo(myLocationNewOverlay.getMyLocation());
                 } else {
                     myLocationNewOverlay.disableMyLocation();
                 }
             }
         });
-        IMapController mapController = map.getController();
-        mapController.setZoom(12.5); //Zoom sur la région de Lille
-        GeoPoint startPoint = new GeoPoint(50.636895, 3.063444); //Grand'Place !!
-        mapController.setCenter(startPoint);
+        //Un petit compas parce que c'est sympa
+        compassOverlay = new CompassOverlay(this, map);
+        compassOverlay.enableCompass();
+        map.getOverlays().add(compassOverlay);
     }
 
     public void onResume() {
@@ -97,6 +111,12 @@ public class MapActivity extends AppCompatActivity {
         //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         //Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
         map.onResume(); //needed for compass, my location overlays, v6.0.0 and up
+
+        if (!switchMyLocation.isChecked()) {
+            Toast.makeText(this, "Pas de localisation", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Localisation activée", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void onPause() {
