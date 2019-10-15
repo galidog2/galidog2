@@ -14,7 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends GenericActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,11 +57,4 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    /**
-     * Ce qu'il se passe quand on rentre dans le mode audio
-     */
-    private void audioModeStart() {
-        Toast.makeText(this, "On entre dans le mode audio", Toast.LENGTH_SHORT).show();
-        //TODO : à déplacer dans une activité générique qui implémentera ce dont on a besoin
-    }
 }
