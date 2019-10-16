@@ -3,6 +3,8 @@ package com.example.galidog2;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -11,17 +13,20 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
-import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+import org.osmdroid.views.overlay.simplefastpoint.LabelledGeoPoint;
+import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlay;
+import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlayOptions;
+import org.osmdroid.views.overlay.simplefastpoint.SimplePointTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +41,8 @@ public class MapActivity extends AppCompatActivity {
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
     private final String TAG = "Galidog2";
-    private CompassOverlay compassOverlay;
-    private List<OverlayItem> mItems = new ArrayList<OverlayItem>();
+    //Liste des points à marquer
+    List<IGeoPoint> points = new ArrayList<>();
 
 
     @Override
@@ -52,9 +57,6 @@ public class MapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
-
-        //Ajout des points
-        ajoutPointInteret();
     }
 
 
@@ -69,12 +71,21 @@ public class MapActivity extends AppCompatActivity {
         ScaleBarOverlay mScaleBarOverlay = new ScaleBarOverlay(map);
         overlays.add(mScaleBarOverlay);
         miseEnPlaceMyLocationOverlay();
+
         IMapController mapController = map.getController();
         mapController.setZoom(12.5); //Zoom sur la région de Lille
-        GeoPoint startPoint = new GeoPoint(50.636895, 3.063444); //Grand'Place : 50.636895, 3.063444
+        GeoPoint startPoint = new GeoPoint(50.637687, 3.064494); //Grand'Place : 50.636895, 3.063444
         mapController.setCenter(startPoint);
-    }
 
+        /**
+         * Ajout de marqueurs
+         * Ce sont des exemples, mais ca fonctionne
+         */
+        ajoutMarqueur(50.637687, 3.064494, "Beffroi");//Beffroi
+        ajoutMarqueur(50.605965, 3.137047, "Centrale");//Centrale
+        ajoutMarqueur(50.636895, 3.063444, "Grand'Place");//Grand'Place
+        ajoutMarqueur(50.605476, 3.139046, "4 Cantons");//4Cantons
+    }
 
     /**
      * Mise en place de l'overlay avec la position de l'utilisateur,
@@ -84,7 +95,6 @@ public class MapActivity extends AppCompatActivity {
         myLocationNewOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
         myLocationNewOverlay.enableFollowLocation();
         myLocationNewOverlay.enableMyLocation();
-        map.getOverlays().add(myLocationNewOverlay);
         //Bouton 'Ma Localisation' on/off
         switchMyLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -98,10 +108,43 @@ public class MapActivity extends AppCompatActivity {
                 }
             }
         });
-        //Un petit compas parce que c'est sympa
-        compassOverlay = new CompassOverlay(this, map);
-        compassOverlay.enableCompass();
-        map.getOverlays().add(compassOverlay);
+        map.getOverlays().add(myLocationNewOverlay);
+    }
+
+    public void ajoutMarqueur(double latitude, double longitude, String text) {
+
+        //création de plein de points jusqu'a 100k easy
+        points.add(new LabelledGeoPoint(latitude, longitude, text));
+        // wrap them in a theme
+        SimplePointTheme pt = new SimplePointTheme(points, true);
+
+        // create label style
+        Paint textStyle = new Paint();
+        textStyle.setStyle(Paint.Style.FILL);//Que l'intérieur du texte
+        textStyle.setColor(Color.parseColor("#0000ff"));//Bleu
+        textStyle.setTextAlign(Paint.Align.CENTER);
+        textStyle.setTextSize(20);
+
+        // set some visual options for the overlay
+        // we use here MAXIMUM_OPTIMIZATION algorithm, which works well with >100k points
+        SimpleFastPointOverlayOptions opt = SimpleFastPointOverlayOptions.getDefaultStyle()
+                .setAlgorithm(SimpleFastPointOverlayOptions.RenderingAlgorithm.MAXIMUM_OPTIMIZATION)
+                .setRadius(7).setIsClickable(true).setCellSize(15).setTextStyle(textStyle);
+
+        // create the overlay with the theme
+        final SimpleFastPointOverlay sfpo = new SimpleFastPointOverlay(pt, opt);
+
+        // onClick callback
+        sfpo.setOnClickListener(new SimpleFastPointOverlay.OnClickListener() {
+            @Override
+            public void onClick(SimpleFastPointOverlay.PointAdapter points, Integer point) {
+                Toast.makeText(map.getContext()
+                        , "You clicked " + ((LabelledGeoPoint) points.get(point)).getLabel()
+                        , Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        map.getOverlays().add(sfpo);
     }
 
     public void onResume() {
@@ -111,12 +154,6 @@ public class MapActivity extends AppCompatActivity {
         //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         //Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
         map.onResume(); //needed for compass, my location overlays, v6.0.0 and up
-
-        if (!switchMyLocation.isChecked()) {
-            Toast.makeText(this, "Pas de localisation", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Localisation activée", Toast.LENGTH_SHORT).show();
-        }
     }
 
     public void onPause() {
