@@ -7,61 +7,42 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-
-import java.util.List;
-
-public class LayoutManager {
-    package com.example.myhello.ui;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.myhello.R;
-import com.example.myhello.data.models.ListeToDo;
-
 import java.util.List;
 
-    public class RecyclerViewAdapter1 extends RecyclerView.Adapter<RecyclerViewAdapter1.ViewHolder>{
-        private static final String TAG = "RecyclerViewAdapter1";
-        private List<ListeToDo> mNomListe;
-        private OnListListener mOnListListener;
+public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
+
+
+        private static final String TAG = "RecyclerViewAdapter";
+        private List<String> mTrajets;
+        private OnTrajetListener mOnTrajetListener;
 
 
         // Constructeur de l'adapter du recyclerview
-        public RecyclerViewAdapter1(List<ListeToDo> NomListe, OnListListener onListListener){
-            this.mNomListe = NomListe;
-            this.mOnListListener = onListListener;
+        public RecyclerViewAdapter(List<String> NomTrajets, OnTrajetListener onTrajetListener){
+            this.mTrajets = NomTrajets;
+            this.mOnTrajetListener = onTrajetListener;
         }
 
         @NonNull
-        @Override
         // La création de l'Adapter provoque la création du ViewHolder
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_listitem, parent,false);
-            return new ViewHolder(view,mOnListListener);
+            return new ViewHolder(view,mOnTrajetListener);
         }
 
-
-
-        @Override
         public int getItemCount() {
-            return mNomListe.size();
+            return mTrajets.size();
         }
 
-        @Override
         // On relie le ViewHolder à l'Item affiché par l'adapter.
         public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
-            holder.nomListe.setText(mNomListe.get(position).getTitreListeToDo());
+            holder.nomListe.setText(mTrajets.get(position));
         }
 
-        public void show(List<ListeToDo> mesListesToDo){
-            mNomListe = mesListesToDo;
+        public void show(List<String> mesTrajets){
+            mTrajets = mesTrajets;
             notifyDataSetChanged();
         }
 
@@ -70,14 +51,14 @@ import java.util.List;
 
             TextView nomListe;
             CoordinatorLayout parentLayout;
-            OnListListener mOnListListener;
+            OnTrajetListener mOnTrajetListener;
 
             // le ViewHolder permet d'ordonner la liste des item
-            ViewHolder(@NonNull View itemView, OnListListener onListListener) {
+            ViewHolder(@NonNull View itemView, OnTrajetListener onTrajetListener) {
                 super(itemView);
                 nomListe=itemView.findViewById(R.id.item);
                 parentLayout=itemView.findViewById(R.id.parent_layout);
-                this.mOnListListener = onListListener;
+                this.mOnTrajetListener = onTrajetListener;
 
                 itemView.setOnClickListener(this);
             }
@@ -85,15 +66,14 @@ import java.util.List;
             @Override
             // lors d'un clique, on appelle la méthode onListClick de l'interface OnListListener
             public void onClick(View v) {
-                mOnListListener.onListClick(getAdapterPosition());
+                mOnTrajetListener.onTrajetClick(getAdapterPosition());
             }
         }
 
-        // Déclaration de l'interface
-        public interface OnListListener{
-            void onListClick(int position);
-        }
-    }
 
+    // Déclaration de l'interface
+    public interface OnTrajetListener{
+            void onTrajetClick(int position);
+        }
 
 }
