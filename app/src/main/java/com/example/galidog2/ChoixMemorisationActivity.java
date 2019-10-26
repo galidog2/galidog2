@@ -155,13 +155,8 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         alertDialogBuilder.setPositiveButton("Valider",new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
-
-                //TODO : ajout d'un itinéraire.
-                // On lance une nouvelle activité
-
-                /* On relance l'activité pour la rafraîchir*/
-                Intent intent = getIntent();
-                finish();
+                Intent intent = new Intent(ChoixMemorisationActivity.this, AjoutTrajetActivity.class);
+                intent.putExtra("nouveaufichier", editText.getText());
                 startActivity(intent);
             }
         });
@@ -169,7 +164,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         alertDialogBuilder.setNegativeButton("Annuler",new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                finish();
+                dialog.cancel();
             }
         });
         AlertDialog alertDialog = alertDialogBuilder.create();
