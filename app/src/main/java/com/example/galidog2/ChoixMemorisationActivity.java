@@ -156,7 +156,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
                 Intent intent = new Intent(ChoixMemorisationActivity.this, AjoutTrajetActivity.class);
-                intent.putExtra("nouveaufichier", editText.getText());
+                intent.putExtra("nouveaufichier", editText.getText().toString());
                 startActivity(intent);
             }
         });
