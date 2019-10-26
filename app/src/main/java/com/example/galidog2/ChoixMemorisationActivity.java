@@ -12,8 +12,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -23,20 +25,49 @@ import java.util.ArrayList;
 public class ChoixMemorisationActivity extends GenericActivity implements RecyclerViewAdapter.OnTrajetListener{
 
     private RecyclerViewAdapter adapter;
+    private RecyclerView recyclerView;
     private static final String TAG = "ChoixMemorisationActivi";
-    private FloatingActionButton floatingActionButton;
-    private int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE;
-    private int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE;
+    private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE=1;
+    private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE=2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choix_memorisation);
-        demandePermissionStockageLecture();
 
         // Utilisation du RecyclerView
-        RecyclerView recyclerView = findViewById(R.id.recycler_view);
+        recyclerView = findViewById(R.id.recycler_view);
 
+        ArrayList<String> listeVide = new ArrayList<>();
+        // Création de l'adapter qui va organiser les ItemHolders
+        adapter = new RecyclerViewAdapter(listeVide,this);
+        recyclerView.setAdapter(adapter);
+        // On implémente un RecyclerViewAdapter basique au RecyclerView
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        boolean demandeL = demandePermissionStockageLecture();
+        if(demandeL){
+
+            ArrayList<String> listeFichiers = recupererListeKML();
+            if(!listeFichiers.isEmpty())
+                adapter.show(listeFichiers);
+        }
+
+        // On crée le bouton flottant qui permet d'ajouter des listes
+        FloatingActionButton floatingActionButton = findViewById(R.id.fab);
+        // Les variables ont besoin d'être déclarées en final car on les utilise dans un cast local.
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                demandePermissionStockageEcriture();
+                boolean demandeE = demandePermissionStockageEcriture();
+                if(demandeE){
+                    CreerAlertDialog();
+                }
+            }
+        });
+    }
+
+    private ArrayList<String> recupererListeKML() {
         // Récupération des titres des itinéraires dans le dossier /storage/emulated/0/osmdroid/kml
         // Remarque : le chemin est (sans doute) à redéfinir.
         String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml";
@@ -49,59 +80,62 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             nomFichier = files[i].getName().substring(0, files[i].getName().lastIndexOf('.'));
             listeFichiers.add(nomFichier);
         }
-
-
-        // Création de l'adapter qui va organiser les ItemHolders
-        adapter = new RecyclerViewAdapter(listeFichiers,this);
-        recyclerView.setAdapter(adapter);
-        // On implémente un RecyclerViewAdapter basique au RecyclerView
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        // On crée le bouton flottant qui permet d'ajouter des listes
-        floatingActionButton = findViewById(R.id.fab);
-        // Les variables ont besoin d'être déclarées en final car on les utilise dans un cast local.
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                demandePermissionStockageEcriture();
-                CreerAlertDialog();
-            }
-        });
+        return listeFichiers;
     }
 
-    private void demandePermissionStockageLecture() {
+    private boolean demandePermissionStockageLecture() {
 
-        while (ContextCompat.checkSelfPermission(this,
+        if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
-
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-
-            }
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+            return false;
         }
+        return true;
     }
 
-    private void demandePermissionStockageEcriture() {
+    private boolean demandePermissionStockageEcriture() {
 
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
 
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+            return false;
+        }
+        return true;
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    ArrayList<String> listeFichiers = recupererListeKML();
+                    if(!listeFichiers.isEmpty())
+                        adapter.show(listeFichiers);
+                } else {
+                    // Permission non autorisée
+                    Toast.makeText(this, "Cette permission est nécessaire pour lire les fichiers", Toast.LENGTH_SHORT).show();
+                    demandePermissionStockageLecture();
+                }
+                return;
             }
-        } else {
+
+            case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    CreerAlertDialog();
+                } else {
+                    Toast.makeText(this, "Cette permission est nécessaire pour sauvegarder des fichiers", Toast.LENGTH_SHORT).show();
+                    demandePermissionStockageEcriture();
+                }
+                return;
+            }
         }
     }
 
@@ -123,6 +157,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             public void onClick(DialogInterface arg0, int arg1) {
 
                 //TODO : ajout d'un itinéraire.
+                // On lance une nouvelle activité
 
                 /* On relance l'activité pour la rafraîchir*/
                 Intent intent = getIntent();
