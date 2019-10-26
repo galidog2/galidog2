@@ -13,8 +13,9 @@ public class AjoutTrajetActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ajout_trajet);
-        //récupération du nom du trajet :
 
+
+        //récupération du nom du trajet :
         if (getIntent().hasExtra("nouveaufichier")){
             String nomFichier = getIntent().getStringExtra("nouveaufichier");
             Log.d(TAG, "onCreate: "+nomFichier);

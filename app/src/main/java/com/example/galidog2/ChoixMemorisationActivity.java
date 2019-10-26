@@ -1,5 +1,6 @@
 package com.example.galidog2;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -12,7 +13,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -25,9 +25,8 @@ import java.util.ArrayList;
 public class ChoixMemorisationActivity extends GenericActivity implements RecyclerViewAdapter.OnTrajetListener{
 
     private RecyclerViewAdapter adapter;
-    private RecyclerView recyclerView;
     ArrayList<String> listeFichiers = new ArrayList<>();
-    private static final String TAG = "ChoixMemorisationActivi";
+    private static final String TAG = "ChoixMemorisationActivity";
     private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE=1;
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE=2;
 
@@ -37,7 +36,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         setContentView(R.layout.activity_choix_memorisation);
 
         // Utilisation du RecyclerView
-        recyclerView = findViewById(R.id.recycler_view);
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
 
         ArrayList<String> listeVide = new ArrayList<>();
         // Création de l'adapter qui va organiser les ItemHolders
@@ -68,21 +67,29 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         });
     }
 
+    /**
+     *
+     * Remarque : le chemin est (sans doute) à redéfinir.
+     * Récupération des titres des itinéraires dans le dossier /storage/emulated/0/osmdroid/kml
+     *
+     * @return la liste des titres des trajets
+     */
     private ArrayList<String> recupererListeKML() {
-        // Récupération des titres des itinéraires dans le dossier /storage/emulated/0/osmdroid/kml
-        // Remarque : le chemin est (sans doute) à redéfinir.
         String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml";
         File directory = new File(path);
         File[] files = directory.listFiles();
         String nomFichier;
-        for (int i = 0; i < files.length; i++)
-        {
-            nomFichier = files[i].getName().substring(0, files[i].getName().lastIndexOf('.'));
+        for (File file : files) {
+            nomFichier = file.getName().substring(0, file.getName().lastIndexOf('.'));
             listeFichiers.add(nomFichier);
         }
         return listeFichiers;
     }
 
+    /**
+     * Méthode pour demander la permission de lecture sur le stockage
+     * @return un booléen qui indique si on demande la permission
+     */
     private boolean demandePermissionStockageLecture() {
 
         if (ContextCompat.checkSelfPermission(this,
@@ -91,11 +98,17 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+            //on indique au-dessus avec la variable MY_PERMISSIONS le numéro de requête.
+            //ce numéro est réutilisé dans onRequestPermissionsResult
             return false;
         }
         return true;
     }
 
+    /**
+     * Méthode pour demander la permission d'écriture sur le stockage
+     * @return un booléen qui indique si on demande la permission
+     */
     private boolean demandePermissionStockageEcriture() {
 
         if (ContextCompat.checkSelfPermission(this,
@@ -109,9 +122,17 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         }
         return true;
     }
-    
+
+    /**
+     * Méthode appelée lors de la demande à l'utilisateur des permissions
+     * Si l'on a une réponse favorable, on peut continuer les actions.
+     * Si l'on a une réponse négative, on redemande la permission car elle est nécessaire à l'application.
+     * @param requestCode le n° de requête
+     * @param permissions les permissions demandées
+     * @param grantResults la réponse de l'utilisateur
+     */
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
                 // If request is cancelled, the result arrays are empty.
@@ -124,17 +145,14 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
                     Toast.makeText(this, "Cette permission est nécessaire pour lire les fichiers", Toast.LENGTH_SHORT).show();
                     demandePermissionStockageLecture();
                 }
-                return;
             }
 
             case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    CreerAlertDialog();
                 } else {
                     Toast.makeText(this, "Cette permission est nécessaire pour sauvegarder des fichiers", Toast.LENGTH_SHORT).show();
                     demandePermissionStockageEcriture();
                 }
-                return;
             }
         }
     }
@@ -171,6 +189,11 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         alertDialog.show();
     }
 
+    /**
+     * Cette méthode permet de démarrer la MapActivity.
+     * Elle lui envoie le nom du trajet à lire.
+     * @param position le numéro de l'élément cliqué
+     */
     @Override
     public void onTrajetClick(int position) {
         Intent intent = new Intent(ChoixMemorisationActivity.this, MapActivity.class);
