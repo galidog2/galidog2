@@ -26,6 +26,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
 
     private RecyclerViewAdapter adapter;
     private RecyclerView recyclerView;
+    ArrayList<String> listeFichiers = new ArrayList<>();
     private static final String TAG = "ChoixMemorisationActivi";
     private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE=1;
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE=2;
@@ -47,7 +48,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         boolean demandeL = demandePermissionStockageLecture();
         if(demandeL){
 
-            ArrayList<String> listeFichiers = recupererListeKML();
+            listeFichiers = recupererListeKML();
             if(!listeFichiers.isEmpty())
                 adapter.show(listeFichiers);
         }
@@ -73,7 +74,6 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml";
         File directory = new File(path);
         File[] files = directory.listFiles();
-        ArrayList<String> listeFichiers = new ArrayList<>();
         String nomFichier;
         for (int i = 0; i < files.length; i++)
         {
@@ -178,6 +178,8 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
 
     @Override
     public void onTrajetClick(int position) {
-        //TODO: lancer la MapActivity
+        Intent intent = new Intent(ChoixMemorisationActivity.this, MapActivity.class);
+        intent.putExtra("nomfichier",listeFichiers.get(position));
+        startActivity(intent);
     }
 }

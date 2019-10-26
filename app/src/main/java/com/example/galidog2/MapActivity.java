@@ -49,6 +49,12 @@ public class MapActivity extends AppCompatActivity{
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
+        //récupération du nom du trajet :
+        if (getIntent().hasExtra("nomfichier")){
+            String nomFichier = getIntent().getStringExtra("nomfichier");
+            Log.i("PMR",nomFichier);
+        }
+
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
