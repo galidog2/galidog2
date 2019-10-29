@@ -116,10 +116,6 @@ public class LectureActivity extends AppCompatActivity {
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
         map.setBuiltInZoomControls(true);
-        IMapController mapController = map.getController();
-        mapController.setZoom(9.5);
-        GeoPoint startPoint = new GeoPoint(50.6, 3.1);
-        mapController.setCenter(startPoint);
         final List<Overlay> overlays = map.getOverlays();
         ScaleBarOverlay mScaleBarOverlay = new ScaleBarOverlay(map);
         overlays.add(mScaleBarOverlay);
