@@ -42,14 +42,13 @@ import androidx.appcompat.app.AppCompatActivity;
 /**
  * Activity générant la carte pour se diriger
  */
-public class MapActivity extends AppCompatActivity {
+public class LectureActivity extends AppCompatActivity {
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
-    private static final String TAG = "MapActivity";
+    private static final String TAG = "LectureActivity";
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
-    private final String TAG = "Galidog2";
     //Liste des points à marquer
     List<IGeoPoint> points = new ArrayList<>();
 
