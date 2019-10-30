@@ -44,6 +44,8 @@ import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+//TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
+
 /**
  * Activity générant la carte pour se diriger
  */
@@ -129,19 +131,7 @@ public class LectureActivity extends AppCompatActivity {
         overlays.add(mScaleBarOverlay);
         miseEnPlaceMyLocationOverlay();
 
-        KmlDocument kmlToRead = new KmlDocument();
-        String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml/"+nomFichier+".kml";
-        File fichier = new File(path);
-        Log.d(TAG, "miseEnPlaceCarte: "+fichier.getName());
-        kmlToRead.parseKMLFile(fichier);
-        FolderOverlay kmlOverlay = (FolderOverlay)kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
-        overlays.add(kmlOverlay);
-        map.invalidate();
-
-        IMapController mapController = map.getController();
-        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
-        BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
-        mapController.setCenter(bb.getCenter());
+        miseEnPlaceKmlOverlay(overlays);
 
         /**
          * Ajout de marqueurs
@@ -151,6 +141,25 @@ public class LectureActivity extends AppCompatActivity {
         ajoutMarqueur(50.605965, 3.137047, "Centrale");//Centrale
         ajoutMarqueur(50.636895, 3.063444, "Grand'Place");//Grand'Place
         ajoutMarqueur(50.605476, 3.139046, "4 Cantons");//4Cantons*/
+    }
+
+    /**
+     * Méthode pour afficher un trajet
+     * @param overlays la liste des overlays
+     */
+    private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
+        KmlDocument kmlToRead = new KmlDocument();
+        String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml/"+nomFichier+".kml";
+        File fichier = new File(path);
+        kmlToRead.parseKMLFile(fichier);
+        FolderOverlay kmlOverlay = (FolderOverlay)kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
+        overlays.add(kmlOverlay);
+        map.invalidate();
+
+        IMapController mapController = map.getController();
+        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
+        BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
+        mapController.setCenter(bb.getCenter());
     }
 
     /**
