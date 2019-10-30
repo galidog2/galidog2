@@ -12,7 +12,7 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
         <activity android:name=".AjoutTrajetActivity"></activity>
-        <activity android:name=".MapActivity" />
+        <activity android:name=".LectureActivity" />
         <activity android:name=".GenericActivity" />
         <activity android:name=".ChoixMemorisationActivity" />
         <activity android:name=".MainActivity">

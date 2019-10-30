@@ -190,13 +190,13 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
     }
 
     /**
-     * Cette méthode permet de démarrer la MapActivity.
+     * Cette méthode permet de démarrer la LectureActivity.
      * Elle lui envoie le nom du trajet à lire.
      * @param position le numéro de l'élément cliqué
      */
     @Override
     public void onTrajetClick(int position) {
-        Intent intent = new Intent(ChoixMemorisationActivity.this, MapActivity.class);
+        Intent intent = new Intent(ChoixMemorisationActivity.this, LectureActivity.class);
         intent.putExtra("nomfichier",listeFichiers.get(position));
         startActivity(intent);
     }
