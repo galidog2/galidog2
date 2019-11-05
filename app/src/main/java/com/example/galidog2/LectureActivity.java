@@ -24,11 +24,13 @@ import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
+import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
@@ -49,7 +51,7 @@ import androidx.appcompat.app.AppCompatActivity;
 /**
  * Activity générant la carte pour se diriger
  */
-public class LectureActivity extends AppCompatActivity {
+public class LectureActivity extends AppCompatActivity implements MapEventsReceiver {
 
     private static final String TAG = "LectureActivity";
 
@@ -81,6 +83,13 @@ public class LectureActivity extends AppCompatActivity {
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
+
+        MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
+        map.getOverlays().add(0,mapEventsOverlay);
+
+    }
+
+    private void navigation(){
 
     }
 
@@ -259,5 +268,15 @@ public class LectureActivity extends AppCompatActivity {
         drawable.draw(canvas);
 
         return bitmap;
+    }
+
+    @Override
+    public boolean singleTapConfirmedHelper(GeoPoint p) {
+        return false;
+    }
+
+    @Override
+    public boolean longPressHelper(GeoPoint p) {
+        return false;
     }
 }
