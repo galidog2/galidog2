@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.CompoundButton;
@@ -21,10 +22,15 @@ import androidx.core.content.ContextCompat;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.FolderOverlay;
+import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
@@ -34,23 +40,27 @@ import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlay;
 import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlayOptions;
 import org.osmdroid.views.overlay.simplefastpoint.SimplePointTheme;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+//TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
+
 /**
  * Activity générant la carte pour se diriger
  */
-public class MapActivity extends AppCompatActivity {
+public class LectureActivity extends AppCompatActivity implements MapEventsReceiver {
+
+    private static final String TAG = "LectureActivity";
+
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
-    private static final String TAG = "MapActivity";
-    private int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE;
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
-    private final String TAG = "Galidog2";
+    private String nomFichier;
     //Liste des points à marquer
     List<IGeoPoint> points = new ArrayList<>();
 
@@ -64,39 +74,23 @@ public class MapActivity extends AppCompatActivity {
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
+        //récupération du nom du trajet :
+        if (getIntent().hasExtra("nomfichier")){
+            nomFichier = getIntent().getStringExtra("nomfichier");
+            Log.i("PMR",nomFichier);
+        }
+
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
-        demandePermissionStockage();
+
+        MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
+        map.getOverlays().add(0,mapEventsOverlay);
 
     }
 
-    private void demandePermissionStockage() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
+    private void navigation(){
 
-            // Permission is not granted
-            // La permission nécessite-t-elle une explication ?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-                // No explanation needed; request the permission
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-
-                // MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        } else {
-            // Permission has already been granted
-        }
     }
 
     private void demandePermissionsLocalisation() {
@@ -141,28 +135,40 @@ public class MapActivity extends AppCompatActivity {
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
         map.setBuiltInZoomControls(true);
-        IMapController mapController = map.getController();
-        mapController.setZoom(9.5);
-        GeoPoint startPoint = new GeoPoint(50.6, 3.1);
-        mapController.setCenter(startPoint);
         final List<Overlay> overlays = map.getOverlays();
         ScaleBarOverlay mScaleBarOverlay = new ScaleBarOverlay(map);
         overlays.add(mScaleBarOverlay);
         miseEnPlaceMyLocationOverlay();
 
-        IMapController mapController = map.getController();
-        mapController.setZoom(12.5); //Zoom sur la région de Lille
-        GeoPoint startPoint = new GeoPoint(50.637687, 3.064494); //Grand'Place : 50.636895, 3.063444
-        mapController.setCenter(startPoint);
+        miseEnPlaceKmlOverlay(overlays);
 
         /**
          * Ajout de marqueurs
          * Ce sont des exemples, mais ca fonctionne
          */
-        ajoutMarqueur(50.637687, 3.064494, "Beffroi");//Beffroi
+        /*ajoutMarqueur(50.637687, 3.064494, "Beffroi");//Beffroi
         ajoutMarqueur(50.605965, 3.137047, "Centrale");//Centrale
         ajoutMarqueur(50.636895, 3.063444, "Grand'Place");//Grand'Place
-        ajoutMarqueur(50.605476, 3.139046, "4 Cantons");//4Cantons
+        ajoutMarqueur(50.605476, 3.139046, "4 Cantons");//4Cantons*/
+    }
+
+    /**
+     * Méthode pour afficher un trajet
+     * @param overlays la liste des overlays
+     */
+    private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
+        KmlDocument kmlToRead = new KmlDocument();
+        String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml/"+nomFichier+".kml";
+        File fichier = new File(path);
+        kmlToRead.parseKMLFile(fichier);
+        FolderOverlay kmlOverlay = (FolderOverlay)kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
+        overlays.add(kmlOverlay);
+        map.invalidate();
+
+        IMapController mapController = map.getController();
+        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
+        BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
+        mapController.setCenter(bb.getCenter());
     }
 
     /**
@@ -262,5 +268,15 @@ public class MapActivity extends AppCompatActivity {
         drawable.draw(canvas);
 
         return bitmap;
+    }
+
+    @Override
+    public boolean singleTapConfirmedHelper(GeoPoint p) {
+        return false;
+    }
+
+    @Override
+    public boolean longPressHelper(GeoPoint p) {
+        return false;
     }
 }

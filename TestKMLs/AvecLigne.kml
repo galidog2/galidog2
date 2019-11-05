@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>AvecLigne</name>
+    <Style id="line-000000-1200-nodesc-normal">
+      <LineStyle>
+        <color>ff000000</color>
+        <width>1.2</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="line-000000-1200-nodesc-highlight">
+      <LineStyle>
+        <color>ff000000</color>
+        <width>1.8</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="line-000000-1200-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#line-000000-1200-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#line-000000-1200-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Placemark>
+      <name><![CDATA[V2 -> Résidence
+]]></name>
+      <styleUrl>#line-000000-1200-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          3.1322844,50.6163879,0
+          3.1334217,50.6170686,0
+          3.1338079,50.6169461,0
+          3.1342585,50.6164015,0
+          3.1353314,50.6162381,0
+          3.1370695,50.6161836,0
+          3.1378205,50.6160611,0
+          3.1391723,50.6161836,0
+          3.1401165,50.616102,0
+          3.1419404,50.6161564,0
+          3.142112,50.6153667,0
+          3.1421764,50.6140596,0
+          3.142155,50.6120036,0
+          3.1438287,50.6117721,0
+          3.1458671,50.6114181,0
+          3.1471331,50.6104786,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>
