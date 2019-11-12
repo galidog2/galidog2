@@ -95,16 +95,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     }
 
-//    public void DrawPolylineWithArrows() {
-    //  TODO ??
-//        SampleDrawPolyline polyline = new SampleDrawPolyline();
-//    }
-
-    /**
-     * Arret après 20 secondes pour essai
-     */
-
-
     private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION)

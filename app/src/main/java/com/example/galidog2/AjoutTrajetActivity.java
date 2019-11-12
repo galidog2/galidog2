@@ -8,34 +8,67 @@ import android.content.pm.PackageManager;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.RadioButton;
+import android.widget.Switch;
 import android.widget.Toast;
 
+import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
+import org.osmdroid.config.Configuration;
+import org.osmdroid.events.MapEventsReceiver;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.FolderOverlay;
+import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.Polyline;
+import org.osmdroid.views.overlay.ScaleBarOverlay;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
-public class AjoutTrajetActivity extends AppCompatActivity {
+public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsReceiver {
+
+    private RadioButton bouton_pause;
+    private Button bouton_arret;
+    MapView map = null; // La vue de la map
+    private MyLocationNewOverlay myLocationNewOverlay;
+    private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
+    private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
+    private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
+    private String nomFichier;
 
     ArrayList<String> listeFichiers = new ArrayList<>();
     private Polyline polyline;
     KmlDocument kmlDocument = new KmlDocument();
-    MapView map = null;
     private static final String TAG = "AjoutTrajetActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ajout_trajet);
+
+        //nécessaire pour osmdroid :
+        Context ctx = getApplicationContext();
+        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
 
         //récupération du nom du trajet :
@@ -44,11 +77,40 @@ public class AjoutTrajetActivity extends AppCompatActivity {
             Log.d(TAG, "onCreate: " + nomFichier);
         }
 
-//        AlertDialogDemarrer();
+        bouton_pause = findViewById(R.id.rb_pause);
+        bouton_arret = findViewById(R.id.bt_arret);
+        switchMyLocation = findViewById(R.id.switchMyLocation);
+        miseEnPlaceCarte();
+
+        MapEventsOverlay mapEventsOverlay = new MapEventsOverlay((MapEventsReceiver) this);
+        map.getOverlays().add(0, mapEventsOverlay);
+
+        AlertDialogDemarrer();
 
         tracerPolyline();
+
+        /**
+         * Si on clique sur les boutons :
+         */
+        bouton_arret.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //TODO : Enregistrer le trajet (et retour à l'accueil)
+                Intent intent = new Intent(AjoutTrajetActivity.this, MainActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        if (bouton_pause.isChecked()) {
+            //TODO: arreter l'enregistrement sans l'enregistrer
+        } else {
+            //TODO : on reprend
+        }
     }
 
+    /**
+     * On suit la position de l'utilisateur
+     */
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(android.location.Location location) {
@@ -78,6 +140,102 @@ public class AjoutTrajetActivity extends AppCompatActivity {
 
         }
     };
+
+    private void demandePermissionsLocalisation() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION)) {
+
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+            }
+        }
+
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            }
+        }
+    }
+
+    /**
+     * Mise en place de la carte
+     */
+    private void miseEnPlaceCarte() {
+        map = (MapView) findViewById(R.id.map);
+        map.setTileSource(TileSourceFactory.MAPNIK);
+        map.setMultiTouchControls(true);
+        map.setBuiltInZoomControls(true);
+        final List<Overlay> overlays = map.getOverlays();
+        ScaleBarOverlay mScaleBarOverlay = new ScaleBarOverlay(map);
+        overlays.add(mScaleBarOverlay);
+        miseEnPlaceMyLocationOverlay();
+
+//        miseEnPlaceKmlOverlay(overlays);
+    }
+
+    /**
+     * Méthode pour afficher un trajet
+     *
+     * @param overlays la liste des overlays
+     */
+    private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
+        KmlDocument kmlToRead = new KmlDocument();
+        String path = Environment.getExternalStorageDirectory().toString() + "/osmdroid/kml/" + nomFichier + ".kml";
+        File fichier = new File(path);
+        kmlToRead.parseKMLFile(fichier);
+        FolderOverlay kmlOverlay = (FolderOverlay) kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
+        overlays.add(kmlOverlay);
+        map.invalidate();
+
+        IMapController mapController = map.getController();
+        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
+        BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
+        mapController.setCenter(bb.getCenter());
+    }
+
+    /**
+     * Mise en place de l'overlay avec la position de l'utilisateur,
+     * Mise en place de l'interrupteur pour activer ou non l'overlay
+     */
+    private void miseEnPlaceMyLocationOverlay() {
+        myLocationNewOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
+        myLocationNewOverlay.disableMyLocation();
+        map.getOverlays().add(myLocationNewOverlay);
+        //Bouton 'Ma Localisation' on/off
+        switchMyLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    demandePermissionsLocalisation();
+                    myLocationNewOverlay.enableMyLocation();
+                    myLocationNewOverlay.enableFollowLocation();
+                    map.getController().animateTo(myLocationNewOverlay.getMyLocation());
+                } else {
+                    myLocationNewOverlay.disableMyLocation();
+                    myLocationNewOverlay.disableFollowLocation();
+                }
+            }
+        });
+        map.getOverlays().add(myLocationNewOverlay);
+
+        IMapController mapController = map.getController();
+        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
+        mapController.setCenter(new GeoPoint(50.636895, 3.063444));
+    }
 
     private void arreterTrajet() {
         long delay = 20 * 1000;
@@ -121,14 +279,12 @@ public class AjoutTrajetActivity extends AppCompatActivity {
         // Un AlertDialog fonctionne comme une «mini-activité».
         // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setMessage("Appuyez sur 'Démarrer' lorsque vous êstes prêt ?");
+        alertDialogBuilder.setMessage("Appuyez sur 'Démarrer' lorsque vous êtes prêt ?");
         // Cet AlertDialog comporte un bouton pour démarrer…
         alertDialogBuilder.setPositiveButton("Démarrer", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
-                // TODO Mettre en route l'enregistrement et afficher la carte aussi
-                Intent intent = new Intent(AjoutTrajetActivity.this, LectureActivity.class);
-                startActivity(intent);
+                switchMyLocation.setChecked(true);
             }
         });
         // … et un bouton pour annuler, qui arrête l'AlertDialog.
@@ -142,5 +298,15 @@ public class AjoutTrajetActivity extends AppCompatActivity {
         });
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+    }
+
+    @Override
+    public boolean singleTapConfirmedHelper(GeoPoint p) {
+        return false;
+    }
+
+    @Override
+    public boolean longPressHelper(GeoPoint p) {
+        return false;
     }
 }
