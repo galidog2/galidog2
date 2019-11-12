@@ -42,6 +42,8 @@ import org.osmdroid.views.overlay.simplefastpoint.SimplePointTheme;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -67,6 +69,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private Polyline polyline;
     //Liste des points à marquer
     List<IGeoPoint> points = new ArrayList<>();
+    KmlDocument kmlDocument = new KmlDocument();
 
 
     @Override
@@ -92,6 +95,8 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         map.getOverlays().add(0, mapEventsOverlay);
 
         tracerPolyline();
+
+//        arreterTrajet();
     }
 
     LocationListener locationListener = new LocationListener() {
@@ -132,8 +137,26 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     }
 
 //    public void DrawPolylineWithArrows() {
+    //  TODO ??
 //        SampleDrawPolyline polyline = new SampleDrawPolyline();
 //    }
+
+    /**
+     * Arret après 20 secondes pour essai
+     */
+    private void arreterTrajet() {
+        long delay = 20 * 1000;
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                kmlDocument.mKmlRoot.addOverlay(polyline, kmlDocument);
+                File localFile = kmlDocument.getDefaultPathForAndroid("my_route.kml");
+                kmlDocument.saveAsKML(localFile);
+                Toast.makeText(LectureActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
+            }
+        }, delay);
+    }
 
     private void tracerPolyline() {
         polyline = new Polyline(map);
@@ -156,30 +179,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             return;
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
-
-//        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    Activity#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for Activity#requestPermissions for more details.
-//            return;
-//        }
-//        Location locationNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-//        Location locationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-//        GeoPoint gp = null;
-//        if (locationGPS != null) {
-//            gp = new GeoPoint(locationGPS.getLatitude(), locationGPS.getLongitude());
-//        } else if (locationNet != null) {
-//            gp = new GeoPoint(locationNet.getLatitude(), locationNet.getLongitude());
-//        } else {
-//            gp = new GeoPoint(50.6, 3.0);
-//        }
-
-//        polyline.addPoint(gp);
     }
 
     private void demandePermissionsLocalisation() {
