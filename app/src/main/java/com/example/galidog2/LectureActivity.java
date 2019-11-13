@@ -125,7 +125,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
             }
         }
-
     }
 
     /**
@@ -168,7 +167,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         map.invalidate();
 
         IMapController mapController = map.getController();
-        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
+        mapController.setZoom((double) 15); //valeur à adapter en fonction de l'itinéraire
         BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
         mapController.setCenter(bb.getCenter());
     }

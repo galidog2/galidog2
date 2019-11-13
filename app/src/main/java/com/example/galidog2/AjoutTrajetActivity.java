@@ -13,8 +13,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.RadioButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -23,10 +23,8 @@ import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.Polyline;
@@ -35,19 +33,19 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+/**
+ * Activité qui permet l'enregistrement d'un nouveau trajet
+ */
 public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsReceiver {
 
-    private RadioButton bouton_pause;
+    private CheckBox bouton_pause;
     private Button bouton_arret;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
@@ -56,7 +54,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
     private String nomFichier;
 
-    ArrayList<String> listeFichiers = new ArrayList<>();
     private Polyline polyline;
     KmlDocument kmlDocument = new KmlDocument();
     private static final String TAG = "AjoutTrajetActivity";
@@ -73,11 +70,11 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         //récupération du nom du trajet :
         if (getIntent().hasExtra("nouveaufichier")) {
-            String nomFichier = getIntent().getStringExtra("nouveaufichier");
+            nomFichier = getIntent().getStringExtra("nouveaufichier");
             Log.d(TAG, "onCreate: " + nomFichier);
         }
 
-        bouton_pause = findViewById(R.id.rb_pause);
+        bouton_pause = findViewById(R.id.cb_pause);
         bouton_arret = findViewById(R.id.bt_arret);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
@@ -95,7 +92,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         bouton_arret.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO : Enregistrer le trajet (et retour à l'accueil)
+                enregistrerTrajet();
+
                 Intent intent = new Intent(AjoutTrajetActivity.this, MainActivity.class);
                 startActivity(intent);
             }
@@ -105,11 +103,13 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             //TODO: arreter l'enregistrement sans l'enregistrer
         } else {
             //TODO : on reprend
+
         }
     }
 
     /**
      * On suit la position de l'utilisateur
+     * Listener de la localisation placé là parce que ca marche
      */
     LocationListener locationListener = new LocationListener() {
         @Override
@@ -117,9 +117,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
             GeoPoint geoPoint = new GeoPoint(latitude, longitude);
-
-            String msg = "New Latitude: " + latitude + "\n New Longitude: " + longitude;
-            Toast.makeText(AjoutTrajetActivity.this, msg, Toast.LENGTH_LONG).show();
 
             polyline.addPoint(geoPoint);
             map.getOverlays().add(polyline);
@@ -141,6 +138,9 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         }
     };
 
+    /**
+     * Demande des permissions au cas ou
+     */
     private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -184,27 +184,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         overlays.add(mScaleBarOverlay);
         miseEnPlaceMyLocationOverlay();
 
-//        miseEnPlaceKmlOverlay(overlays);
-    }
-
-    /**
-     * Méthode pour afficher un trajet
-     *
-     * @param overlays la liste des overlays
-     */
-    private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
-        KmlDocument kmlToRead = new KmlDocument();
-        String path = Environment.getExternalStorageDirectory().toString() + "/osmdroid/kml/" + nomFichier + ".kml";
-        File fichier = new File(path);
-        kmlToRead.parseKMLFile(fichier);
-        FolderOverlay kmlOverlay = (FolderOverlay) kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
-        overlays.add(kmlOverlay);
-        map.invalidate();
-
-        IMapController mapController = map.getController();
-        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
-        BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
-        mapController.setCenter(bb.getCenter());
+        polyline = new Polyline(map);
     }
 
     /**
@@ -233,29 +213,45 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         map.getOverlays().add(myLocationNewOverlay);
 
         IMapController mapController = map.getController();
-        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
+        mapController.setZoom((double) 15); //valeur à adapter en fonction de l'itinéraire
         mapController.setCenter(new GeoPoint(50.636895, 3.063444));
     }
 
-    private void arreterTrajet() {
-        long delay = 20 * 1000;
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                kmlDocument.mKmlRoot.addOverlay(polyline, kmlDocument);
-                File localFile = kmlDocument.getDefaultPathForAndroid("my_route.kml");
-                kmlDocument.saveAsKML(localFile);
-                Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
-            }
-        }, delay);
+    /**
+     * Permet d'enregistrer le trajet
+     */
+    private void enregistrerTrajet() {
+        kmlDocument.mKmlRoot.addOverlay(polyline, kmlDocument);
+        File localFile = cheminStockage(nomFichier + ".kml");
+        kmlDocument.saveAsKML(localFile);
+        Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * Permet d'avoir le chemin jusqu'au dossier de stockage
+     *
+     * @param fileName
+     * @return
+     */
+    private File cheminStockage(String fileName) {
+        try {
+            String path = Environment.getExternalStorageDirectory().toString() + "/osmdroid/kml";
+            File directory = new File(path);
+            directory.mkdir();
+            return new File(directory.getAbsolutePath(), fileName);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Tracer le trajet en suivant le listener de la localisation
+     */
     private void tracerPolyline() {
-        polyline = new Polyline(map);
         polyline.setWidth(8f);
 
-        int minTime = 4000;
+        int minTime = 2000;
         int minDistance = 2;
 
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -274,6 +270,10 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
     }
 
+    /**
+     * Message demandant la confirmation avant de commencer l'enregistrement
+     * La localisation doit etre activée dans les paramètres ...
+     */
     private void AlertDialogDemarrer() {
 
         // Un AlertDialog fonctionne comme une «mini-activité».
