@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -63,6 +64,9 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ajout_trajet);
 
+        //Garder l'écran allumé pour pouvoir enregistrer en continu
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         //nécessaire pour osmdroid :
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
@@ -87,7 +91,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         tracerPolyline();
 
         /**
-         * Si on clique sur les boutons :
+         * Bouton 'Arrêt' pour arrêter et enregistrer le  trajet :
          */
         bouton_arret.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,13 +102,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
                 startActivity(intent);
             }
         });
-
-        if (bouton_pause.isChecked()) {
-            //TODO: arreter l'enregistrement sans l'enregistrer
-        } else {
-            //TODO : on reprend
-
-        }
     }
 
     /**
@@ -114,12 +111,14 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(android.location.Location location) {
-            double latitude = location.getLatitude();
-            double longitude = location.getLongitude();
-            GeoPoint geoPoint = new GeoPoint(latitude, longitude);
+            if (!bouton_pause.isChecked()) {
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                GeoPoint geoPoint = new GeoPoint(latitude, longitude);
 
-            polyline.addPoint(geoPoint);
-            map.getOverlays().add(polyline);
+                polyline.addPoint(geoPoint);
+                map.getOverlays().add(polyline);
+            }
         }
 
         @Override
