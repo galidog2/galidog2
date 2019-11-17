@@ -86,6 +86,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay((MapEventsReceiver) this);
         map.getOverlays().add(0, mapEventsOverlay);
 
+        switchMyLocation.setChecked(true);
         AlertDialogDemarrer();
 
         tracerPolyline();
@@ -118,6 +119,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
                 polyline.addPoint(geoPoint);
                 map.getOverlays().add(polyline);
+                map.getController().animateTo(geoPoint);
             }
         }
 
@@ -278,12 +280,12 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         // Un AlertDialog fonctionne comme une «mini-activité».
         // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setMessage("Appuyez sur 'Démarrer' lorsque vous êtes prêt ?");
+        alertDialogBuilder.setMessage("Appuyez sur 'Démarrer' lorsque vous êtes prêt");
         // Cet AlertDialog comporte un bouton pour démarrer…
         alertDialogBuilder.setPositiveButton("Démarrer", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
-                switchMyLocation.setChecked(true);
+                //On attend, le temps que la localisation se fasse et que l'utilisateur soit prêt
             }
         });
         // … et un bouton pour annuler, qui arrête l'AlertDialog.
