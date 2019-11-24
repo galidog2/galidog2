@@ -2,6 +2,7 @@ package com.example.galidog2;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,6 +13,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -71,10 +77,44 @@ public class MainActivity extends AppCompatActivity {
                             .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                     String text = result.get(0);
                     txtOutput.setText(text);
+                    interpreterAction(text);
                 }
                 break;
             }
         }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void interpreterAction (String speech) {
+        String[] words = speech.split(" ");
+        List<String> wordsList = Arrays.asList(words);
+
+        String action = "";
+        if (speech.contains("continue")) action = "continuer";
+        else if (speech.contains("tourne")) action = "tourner";
+        else if (speech.contains("transverse")) action = "transverser";
+        else if (speech.contains("monte")) action = "monter";
+        else if (speech.contains("descend")) action = "descendre";
+        else if (speech.contains("alle")) action = "aller";
+        else if (speech.contains("demi-tour")) action = "demi-tour";
+
+
+        String direction = "";
+        if (speech.contains("gauche")) direction = "gauche";
+        else if (speech.contains("droite")) direction = "droite";
+
+        String distance = "";
+        String distanceMesure = "";
+
+        for(int i = 0; i < wordsList.size(); i++){
+            String word = wordsList.get(i);
+            if (word.equals("m") || word.contains("mètre")) {
+                distanceMesure = "metres";
+                if (i > 0) distance = wordsList.get(i-1);
+            }
+        }
+
+        txtOutput.setText("Speech : " + speech + "\nAction : " + action + "\nDirection : " + direction + "\nDistance : " + distance + " " + distanceMesure);
     }
 
 }
