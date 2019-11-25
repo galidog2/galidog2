@@ -84,36 +84,46 @@ public class TestNavigationActivity extends AppCompatActivity {
     protected void addOverlays() {
 
         final Polyline line = new Polyline(mMapView);
-        line.getOutlinePaint().setColor(COLOR_POLYLINE_STATIC);
-        line.getOutlinePaint().setStrokeWidth(LINE_WIDTH_BIG);
+        /*line.getOutlinePaint().setColor(COLOR_POLYLINE_STATIC);
+        line.getOutlinePaint().setStrokeWidth(LINE_WIDTH_BIG);*/
         line.setPoints(mGeoPoints);
-        line.getOutlinePaint().setStrokeCap(Paint.Cap.ROUND);
+        /*line.getOutlinePaint().setStrokeCap(Paint.Cap.ROUND);*/
         final List<MilestoneManager> managers = new ArrayList<>();
         final MilestoneMeterDistanceSliceLister slicerForPath = new MilestoneMeterDistanceSliceLister();
         Resources res = getApplicationContext().getResources();
         int id = R.drawable.centre;
         final Bitmap bitmap = BitmapFactory.decodeResource(res, id);
+
         final MilestoneMeterDistanceSliceLister slicerForIcon = new MilestoneMeterDistanceSliceLister();
         managers.add(getAnimatedPathManager(slicerForPath));
         managers.add(getAnimatedIconManager(slicerForIcon, bitmap));
         managers.add(getHalfKilometerManager());
         managers.add(getKilometerManager());
-        managers.add(getStartManager(bitmap));
+        /*managers.add(getStartManager(bitmap));*/
         line.setMilestoneManagers(managers);
         mMapView.getOverlayManager().add(line);
         final ValueAnimator percentageCompletion = ValueAnimator.ofFloat(0, 10000); // 10 kilometers
+
+        //Duration of animation
         percentageCompletion.setDuration(5000); // 5 seconds
+
+        //Delay of animation
         percentageCompletion.setStartDelay(1000); // 1 second
+
+        //Notify animation working
         percentageCompletion.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 mAnimatedMetersSoFar = (float)animation.getAnimatedValue();
+                //Animate path and icon
                 slicerForPath.setMeterDistanceSlice(0, mAnimatedMetersSoFar);
                 slicerForIcon.setMeterDistanceSlice(mAnimatedMetersSoFar, mAnimatedMetersSoFar);
                 Log.d(TAG, "onAnimationUpdate: ");
                 mMapView.invalidate();
             }
         });
+
+        //Notify animation ended
         percentageCompletion.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
