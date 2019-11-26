@@ -46,7 +46,6 @@ import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-//TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
 
 /**
  * Activity générant la carte pour se diriger
