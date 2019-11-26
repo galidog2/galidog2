@@ -46,7 +46,6 @@ import androidx.core.content.ContextCompat;
 
 //import org.osmdroid.samplefragments.drawing.DrawPolylineWithArrows;
 
-//TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
 
 /**
  * Activity générant la carte pour se diriger
