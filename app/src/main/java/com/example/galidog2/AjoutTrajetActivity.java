@@ -27,6 +27,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
@@ -34,6 +35,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.appcompat.app.AlertDialog;
@@ -54,6 +56,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
     private String nomFichier;
+    private GeoPoint dernierPoint;
+    private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
 
     private Polyline polyline;
     KmlDocument kmlDocument = new KmlDocument();
@@ -97,6 +101,9 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         bouton_arret.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //On trace le marqueur d'arrivée
+                tracerMarqueurs("Arrivée");
+                //On enregistre polyline et marqueurs
                 enregistrerTrajet();
 
                 Intent intent = new Intent(AjoutTrajetActivity.this, MainActivity.class);
@@ -115,11 +122,16 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             if (!bouton_pause.isChecked()) {
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
-                GeoPoint geoPoint = new GeoPoint(latitude, longitude);
+                dernierPoint = new GeoPoint(latitude, longitude);
+//                GeoPoint geoPoint = new GeoPoint(latitude, longitude);
 
-                polyline.addPoint(geoPoint);
+                polyline.addPoint(dernierPoint);
                 map.getOverlays().add(polyline);
-                map.getController().animateTo(geoPoint);
+                map.getController().animateTo(dernierPoint);
+
+                if (polyline.getPoints().size() == 1) {
+                    tracerMarqueurs("Départ");
+                }
             }
         }
 
@@ -139,8 +151,21 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         }
     };
 
+    private void tracerMarqueurs(String titre) {
+
+        Marker marker = new Marker(map);
+        marker.setPosition(dernierPoint);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        marker.setIcon(getDrawable(R.drawable.marqueur));
+        marker.setSubDescription("Description possible");
+        marker.setSnippet("Adresse ?");
+        marker.setTitle(titre);
+        listeMarqueurs.add(marker);
+        map.getOverlays().add(marker);
+    }
+
     /**
-     * Demande des permissions au cas ou
+     * Demande des permissions au cas où
      */
     private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
@@ -223,6 +248,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
      */
     private void enregistrerTrajet() {
         kmlDocument.mKmlRoot.addOverlay(polyline, kmlDocument);
+        kmlDocument.mKmlRoot.addOverlays(listeMarqueurs, kmlDocument);
+
         File localFile = cheminStockage(nomFichier + ".kml");
         kmlDocument.saveAsKML(localFile);
         Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
@@ -259,13 +286,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         //Nécessaire pour pas d'erreur mais degueulasse !
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    Activity#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for Activity#requestPermissions for more details.
             return;
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
