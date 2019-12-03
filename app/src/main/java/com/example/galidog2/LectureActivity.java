@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.os.Environment;
@@ -30,8 +31,10 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
@@ -60,6 +63,10 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private String nomFichier;
     private FolderOverlay kmlOverlay;
     private List<GeoPoint> mGeoPoints;
+    private Location location;
+    private Polyline trajet;
+    private Marker depart;
+    private boolean onGoing = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -82,15 +89,20 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         miseEnPlaceCarte();
 
         List<Overlay> overlays = kmlOverlay.getItems();
-
+        trajet = new Polyline();
         int i;
         for (i= 0 ; i<overlays.size(); i++)
         {
             if(overlays.get(i) instanceof Polyline){
-                break;
+                trajet = (Polyline)overlays.get(i);
+            }
+            if (overlays.get(i) instanceof Marker){
+                Marker marker = (Marker)overlays.get(i);
+                if (marker.getTitle().equals("Départ")){
+                    depart = marker;
+                }
             }
         }
-        Polyline trajet = (Polyline)map.getOverlays().get(i);
         mGeoPoints = trajet.getPoints();
         map.post(new Runnable() {
             @Override
@@ -108,6 +120,31 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(android.location.Location location) {
+
+            // Projection pour convertir la précision (reçue en mètres) en pixels.
+            Projection projection = map.getProjection();
+            float accuracy = projection.metersToPixels(location.getAccuracy());
+
+            GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
+            if (onGoing){
+                if(!trajet.isCloseTo(locationGeo,accuracy, map)){
+                    Toast.makeText(getApplicationContext(),"Revenez sur vos pas, vous vous éloignez du trajet.", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    //Donner les indications...
+                }
+            }
+
+            else {
+                if(trajet.isCloseTo(depart.getPosition(),accuracy, map)){
+                    onGoing = true;
+                    Toast.makeText(getApplicationContext(),"Vous êtes sur le point de départ. Démarrage du trajet", Toast.LENGTH_SHORT).show();
+                }
+
+                else{
+                    Toast.makeText(getApplicationContext(),"Placez vous sur le point de départ s'il vous plaît.", Toast.LENGTH_SHORT).show();
+                }
+            }
 
         }
 
