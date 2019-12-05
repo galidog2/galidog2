@@ -50,6 +50,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
     private CheckBox bouton_pause;
     private Button bouton_arret;
+    private Button bouton_marker;
+    private int numero_marker = 1;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
@@ -84,6 +86,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         bouton_pause = findViewById(R.id.cb_pause);
         bouton_arret = findViewById(R.id.bt_arret);
+        bouton_marker = findViewById(R.id.bt_marker);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
 
@@ -102,12 +105,21 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             @Override
             public void onClick(View v) {
                 //On trace le marqueur d'arrivée
-                tracerMarqueurs("Arrivée");
+                tracerMarqueur("Arrivée");
                 //On enregistre polyline et marqueurs
                 enregistrerTrajet();
 
                 Intent intent = new Intent(AjoutTrajetActivity.this, MainActivity.class);
                 startActivity(intent);
+            }
+        });
+
+        bouton_marker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //On trace le marqueur
+                tracerMarqueur("Point " + numero_marker);
+                numero_marker = numero_marker + 1;
             }
         });
     }
@@ -130,7 +142,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
                 map.getController().animateTo(dernierPoint);
 
                 if (polyline.getPoints().size() == 1) {
-                    tracerMarqueurs("Départ");
+                    tracerMarqueur("Départ");
                 }
             }
         }
@@ -151,8 +163,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         }
     };
 
-    private void tracerMarqueurs(String titre) {
-
+    private void tracerMarqueur(String titre) {
         Marker marker = new Marker(map);
         marker.setPosition(dernierPoint);
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);

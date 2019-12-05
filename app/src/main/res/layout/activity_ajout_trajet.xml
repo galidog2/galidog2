@@ -41,6 +41,15 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/map" />
 
+    <Button
+        android:id="@+id/bt_marker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Marker"
+        app:layout_constraintBottom_toBottomOf="@+id/map"
+        app:layout_constraintEnd_toEndOf="@+id/map"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <CheckBox
         android:id="@+id/cb_pause"
         android:layout_width="wrap_content"
