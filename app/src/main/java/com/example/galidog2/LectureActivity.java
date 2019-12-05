@@ -2,16 +2,21 @@ package com.example.galidog2;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationListener;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
@@ -64,6 +69,26 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     //Liste des points à marquer
     List<IGeoPoint> points = new ArrayList<>();
 
+    //Boutton pour dessiner un cercle
+    private Button Circle;
+    //Boutton pour checker si on est dans un cercle
+    private Button CheckPoint;
+
+    //Liste les latitude longitude et rayon en double de chaque cercle
+    private double[][] ListCircleEveilDouble = new double[5][3];
+    private double[][] ListCircleValidationDouble = new double[5][3];
+
+    //Liste les CirclePlottingOverlay (les cercles)
+    private CirclePlottingOverlay[] ListCircleEveil = new CirclePlottingOverlay[5];
+    private CirclePlottingOverlay[] ListCircleValidation = new CirclePlottingOverlay[5];
+
+
+    //Se valide si on est dans le cercle de validation
+    private Switch CheckValidation;
+    //Se valide si on est dans le cercle d'éveil
+    private Switch CheckEveil;
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -87,11 +112,96 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
         map.getOverlays().add(0,mapEventsOverlay);
 
+
+        myLocationNewOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
+        Circle = findViewById(R.id.DrawCircle);
+        Circle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 5);
+                cercle_eveil.drawCircle(map, Color.RED);
+                map.getOverlays().add(cercle_eveil);
+                ListCircleEveil[0]=cercle_eveil;
+                ListCircleEveilDouble[0][0]=cercle_eveil.getLatitude();
+                ListCircleEveilDouble[0][1]=cercle_eveil.getLongitude();
+                ListCircleEveilDouble[0][2]=cercle_eveil.getRayon();
+                CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 2);
+                cercle_validation.drawCircle(map, Color.RED);
+                map.getOverlays().add(cercle_validation);
+                ListCircleValidation[0]=cercle_validation;
+                ListCircleValidationDouble[0][0]=cercle_validation.getLatitude();
+                ListCircleValidationDouble[0][1]=cercle_validation.getLongitude();
+                ListCircleValidationDouble[0][2]=cercle_validation.getRayon();
+            }
+        });
+
+
+        CheckPoint = findViewById(R.id.CheckPoint);
+        CheckPoint.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "onClick: test fonction appuie bouton");
+                CheckCircleEveil(myLocationNewOverlay.getMyLocation());
+                Log.d(TAG, "onClick: test fonction boutton 2");
+                CheckCircleValidation(myLocationNewOverlay.getMyLocation());
+            }
+        });
+
+        CheckEveil = findViewById(R.id.CheckEveil);
+        CheckValidation = findViewById(R.id.CheckValidation);
+
+
+        CheckEveil.setChecked(true);
+
     }
+
+
+
+
 
     private void navigation(){
 
     }
+
+    //Fonction pour changer la couleur du cercle d'Eveil
+    private void ModifColorEveil(int n){
+         ListCircleEveil[n].changeColor(map, Color.GREEN);
+    }
+
+    //Fonction pour changer la couleur du cercle de validation
+    private void ModifColorValidation(int n){
+        ListCircleValidation[n].changeColor(map, Color.GREEN);
+    }
+
+
+    //On check si on est dans le cercle d'éveil du point n
+
+
+            public void CheckCircleEveil(GeoPoint p) {
+                double latitude = p.getLatitude();
+                double longitude = p.getLongitude();
+                Log.d(TAG, "onLocationChanged: test fonction changement couleur");
+                if (Math.pow((latitude - ListCircleEveilDouble[0][0])*111.11, 2) + Math.pow((longitude - ListCircleEveilDouble[0][1])*111.11*Math.cos(Math.toRadians(latitude)), 2) - Math.pow(ListCircleEveilDouble[0][2]/1000, 2) < 0) {
+                    //On modifie la couleur
+                    ModifColorEveil(0);
+                }
+            }
+
+
+    //On check si on est dans le cercle de validation du point n
+
+
+            public void CheckCircleValidation(GeoPoint p) {
+                double latitude = p.getLatitude();
+                double longitude = p.getLongitude();
+                if (Math.pow((latitude - ListCircleValidationDouble[0][0])*111.11, 2) + Math.pow((longitude - ListCircleValidationDouble[0][1])*111.11*Math.cos(Math.toRadians(latitude)), 2) - Math.pow(ListCircleValidationDouble[0][2]/1000, 2) < 0) {
+                    //On modifie la couleur
+                    ModifColorValidation(0);
+                }
+            }
+
+
+
 
     private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
@@ -166,9 +276,9 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         map.invalidate();
 
         IMapController mapController = map.getController();
-        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
+        mapController.setZoom((double) 15); //valeur à adapter en fonction de l'itinéraire
         BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
-        mapController.setCenter(bb.getCenter());
+        mapController.setCenter(bb.getCenterWithDateLine());
     }
 
     /**
@@ -269,6 +379,8 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
         return bitmap;
     }
+
+
 
     @Override
     public boolean singleTapConfirmedHelper(GeoPoint p) {

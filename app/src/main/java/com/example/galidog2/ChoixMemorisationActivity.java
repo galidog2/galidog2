@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -75,7 +76,8 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
      * @return la liste des titres des trajets
      */
     private ArrayList<String> recupererListeKML() {
-        String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml";
+        String path = Environment.getExternalStorageDirectory().toString()+"/osmdroid/kml";
+        Log.d(TAG, "recupererListeKML: " +path);
         File directory = new File(path);
         File[] files = directory.listFiles();
         String nomFichier;
