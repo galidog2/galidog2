@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import android.widget.Toast;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
+import org.osmdroid.bonuspack.location.GeocoderNominatim;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -35,6 +37,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,6 +63,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private String nomFichier;
     private GeoPoint dernierPoint;
     private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
+
+    private String MY_USERAGENT = "com.beview.mygeoapp";
 
     private Polyline polyline;
     KmlDocument kmlDocument = new KmlDocument();
@@ -120,6 +125,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
                 //On trace le marqueur
                 tracerMarqueur("Point " + numero_marker);
                 numero_marker = numero_marker + 1;
+                trouverAdresse(dernierPoint); //Trouver l'adresse du marker pour le mettre en description de marker
             }
         });
     }
@@ -162,6 +168,47 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         }
     };
+
+    private void trouverAdresse(GeoPoint geoPoint) {
+        // Reverse Geocoding
+        GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
+        String theAddress;
+
+        try {
+            List<Address> addresses = geocoder.getFromLocation(geoPoint.getLatitude(), geoPoint.getLongitude(), 1);
+            StringBuilder sb = new StringBuilder();
+            if (addresses.size() > 0) {
+                Address address = addresses.get(0);
+                int n = address.getMaxAddressLineIndex();
+                Log.d("Test", "CountryName: " + address.getCountryName());
+                Log.d("Test", "CountryCode: " + address.getCountryCode());
+                Log.d("Test", "PostalCode " + address.getPostalCode());
+//                        Log.d("Test", "FeatureName " + address.getFeatureName()); //null
+                Log.d("Test", "City: " + address.getAdminArea());
+                Log.d("Test", "Locality: " + address.getLocality());
+                Log.d("Test", "Premises: " + address.getPremises()); //null
+                Log.d("Test", "SubAdminArea: " + address.getSubAdminArea());
+                Log.d("Test", "SubLocality: " + address.getSubLocality());
+//                        Log.d("Test", "SubThoroughfare: " + address.getSubThoroughfare()); //null
+//                        Log.d("Test", "getThoroughfare: " + address.getThoroughfare()); //null
+                Log.d("Test", "Locale: " + address.getLocale());
+                for (int i = 0; i <= n; i++) {
+                    if (i != 0)
+                        sb.append(", ");
+                    sb.append(address.getAddressLine(i));
+                }
+                theAddress = sb.toString();
+            } else {
+                theAddress = null;
+            }
+            Toast.makeText(this, theAddress, Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            theAddress = null;
+        }
+        if (theAddress != null) {
+            Log.d("Test", "Address: " + theAddress);
+        }
+    }
 
     private void tracerMarqueur(String titre) {
         Marker marker = new Marker(map);
