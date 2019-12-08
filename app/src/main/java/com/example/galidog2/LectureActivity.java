@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -115,6 +116,21 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
         map.getOverlays().add(0,mapEventsOverlay);
 
+        setLocalisationManager();
+
+    }
+
+    private void setLocalisationManager(){
+        int minTime = 2000;
+        int minDistance = 2;
+
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        //Nécessaire pour pas d'erreur mais degueulasse !
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
     }
 
     LocationListener locationListener = new LocationListener() {
@@ -126,16 +142,8 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             float accuracy = projection.metersToPixels(location.getAccuracy());
 
             GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
-            if (onGoing){
-                if(!trajet.isCloseTo(locationGeo,accuracy, map)){
-                    Toast.makeText(getApplicationContext(),"Revenez sur vos pas, vous vous éloignez du trajet.", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    //Donner les indications...
-                }
-            }
 
-            else {
+            if(!onGoing) {
                 if(trajet.isCloseTo(depart.getPosition(),accuracy, map)){
                     onGoing = true;
                     Toast.makeText(getApplicationContext(),"Vous êtes sur le point de départ. Démarrage du trajet", Toast.LENGTH_SHORT).show();
@@ -143,6 +151,15 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
                 else{
                     Toast.makeText(getApplicationContext(),"Placez vous sur le point de départ s'il vous plaît.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            else{
+                if(!trajet.isCloseTo(locationGeo,accuracy, map)){
+                    Toast.makeText(getApplicationContext(),"Revenez sur vos pas, vous vous éloignez du trajet.", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    //Donner les indications...
                 }
             }
 
@@ -163,10 +180,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
         }
     };
-
-    private void navigation(){
-
-    }
+    
 
     private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
