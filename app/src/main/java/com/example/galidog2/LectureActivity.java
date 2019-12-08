@@ -180,7 +180,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
         }
     };
-    
 
     private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
