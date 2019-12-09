@@ -16,10 +16,6 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
@@ -45,6 +41,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+//import org.osmdroid.samplefragments.drawing.DrawPolylineWithArrows;
 
 //TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
 
@@ -64,7 +64,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     //Liste des points à marquer
     List<IGeoPoint> points = new ArrayList<>();
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
@@ -75,9 +74,9 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
         //récupération du nom du trajet :
-        if (getIntent().hasExtra("nomfichier")){
+        if (getIntent().hasExtra("nomfichier")) {
             nomFichier = getIntent().getStringExtra("nomfichier");
-            Log.i("PMR",nomFichier);
+            Log.i("PMR", nomFichier);
         }
 
         setContentView(R.layout.activity_map);
@@ -85,11 +84,14 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         miseEnPlaceCarte();
 
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
-        map.getOverlays().add(0,mapEventsOverlay);
-
+        map.getOverlays().add(0, mapEventsOverlay);
     }
 
-    private void navigation(){
+
+    /**
+     * Fonction utilisée lorsque le mal-voyant refait seul la route
+     */
+    private void navigation() {
 
     }
 
@@ -123,12 +125,10 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
             }
         }
-
     }
 
-
     /**
-     * Mise en place de la carte du monde
+     * Mise en place de la carte
      */
     private void miseEnPlaceCarte() {
         map = (MapView) findViewById(R.id.map);
@@ -154,19 +154,20 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     /**
      * Méthode pour afficher un trajet
+     *
      * @param overlays la liste des overlays
      */
     private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
         KmlDocument kmlToRead = new KmlDocument();
-        String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml/"+nomFichier+".kml";
+        String path = Environment.getExternalStorageDirectory().toString() + "/osmdroid/kml/" + nomFichier + ".kml";
         File fichier = new File(path);
         kmlToRead.parseKMLFile(fichier);
-        FolderOverlay kmlOverlay = (FolderOverlay)kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
+        FolderOverlay kmlOverlay = (FolderOverlay) kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
         overlays.add(kmlOverlay);
         map.invalidate();
 
         IMapController mapController = map.getController();
-        mapController.setZoom(15); //valeur à adapter en fonction de l'itinéraire
+        mapController.setZoom((double) 15); //valeur à adapter en fonction de l'itinéraire
         BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
         mapController.setCenter(bb.getCenter());
     }
@@ -229,7 +230,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                         , Toast.LENGTH_SHORT).show();
             }
         });
-
         map.getOverlays().add(sfpo);
     }
 
