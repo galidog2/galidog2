@@ -8,6 +8,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -15,6 +18,10 @@ import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
@@ -25,28 +32,22 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
-import org.osmdroid.views.overlay.simplefastpoint.LabelledGeoPoint;
-import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlay;
-import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlayOptions;
-import org.osmdroid.views.overlay.simplefastpoint.SimplePointTheme;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-//import org.osmdroid.samplefragments.drawing.DrawPolylineWithArrows;
-
-//TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
 
 /**
  * Activity générant la carte pour se diriger
@@ -61,8 +62,12 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
     private String nomFichier;
-    //Liste des points à marquer
-    List<IGeoPoint> points = new ArrayList<>();
+    private FolderOverlay kmlOverlay;
+    private List<GeoPoint> mGeoPoints;
+    private Location location;
+    private Polyline trajet;
+    private Marker depart;
+    private boolean onGoing = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,26 +79,107 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
         //récupération du nom du trajet :
-        if (getIntent().hasExtra("nomfichier")) {
+        if (getIntent().hasExtra("nomfichier")){
             nomFichier = getIntent().getStringExtra("nomfichier");
-            Log.i("PMR", nomFichier);
+            Log.i("PMR",nomFichier);
         }
 
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
+        switchMyLocation.setChecked(true);
         miseEnPlaceCarte();
 
+        List<Overlay> overlays = kmlOverlay.getItems();
+        trajet = new Polyline();
+        int i;
+        for (i= 0 ; i<overlays.size(); i++)
+        {
+            if(overlays.get(i) instanceof Polyline){
+                trajet = (Polyline)overlays.get(i);
+            }
+            if (overlays.get(i) instanceof Marker){
+                Marker marker = (Marker)overlays.get(i);
+                if (marker.getTitle().equals("Départ")){
+                    depart = marker;
+                }
+            }
+        }
+        mGeoPoints = trajet.getPoints();
+        map.post(new Runnable() {
+            @Override
+            public void run() {
+                final BoundingBox boundingBox = BoundingBox.fromGeoPoints(mGeoPoints);
+                map.zoomToBoundingBox(boundingBox, false, 30);
+            }
+        });
+
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
-        map.getOverlays().add(0, mapEventsOverlay);
-    }
+        map.getOverlays().add(0,mapEventsOverlay);
 
-
-    /**
-     * Fonction utilisée lorsque le mal-voyant refait seul la route
-     */
-    private void navigation() {
+        setLocalisationManager();
 
     }
+
+    private void setLocalisationManager(){
+        int minTime = 2000;
+        int minDistance = 2;
+
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        //Nécessaire pour pas d'erreur mais degueulasse !
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
+    }
+
+    LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(android.location.Location location) {
+
+            // Projection pour convertir la précision (reçue en mètres) en pixels.
+            Projection projection = map.getProjection();
+            float accuracy = projection.metersToPixels(location.getAccuracy());
+
+            GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
+
+            if(!onGoing) {
+                if(trajet.isCloseTo(depart.getPosition(),accuracy, map)){
+                    onGoing = true;
+                    Toast.makeText(getApplicationContext(),"Vous êtes sur le point de départ. Démarrage du trajet", Toast.LENGTH_SHORT).show();
+                }
+
+                else{
+                    Toast.makeText(getApplicationContext(),"Placez vous sur le point de départ s'il vous plaît.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            else{
+                if(!trajet.isCloseTo(locationGeo,accuracy, map)){
+                    Toast.makeText(getApplicationContext(),"Revenez sur vos pas, vous vous éloignez du trajet.", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    //Donner les indications...
+                }
+            }
+
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
 
     private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
@@ -125,10 +211,12 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
             }
         }
+
     }
 
+
     /**
-     * Mise en place de la carte
+     * Mise en place de la carte du monde
      */
     private void miseEnPlaceCarte() {
         map = (MapView) findViewById(R.id.map);
@@ -141,35 +229,20 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         miseEnPlaceMyLocationOverlay();
 
         miseEnPlaceKmlOverlay(overlays);
-
-        /**
-         * Ajout de marqueurs
-         * Ce sont des exemples, mais ca fonctionne
-         */
-        /*ajoutMarqueur(50.637687, 3.064494, "Beffroi");//Beffroi
-        ajoutMarqueur(50.605965, 3.137047, "Centrale");//Centrale
-        ajoutMarqueur(50.636895, 3.063444, "Grand'Place");//Grand'Place
-        ajoutMarqueur(50.605476, 3.139046, "4 Cantons");//4Cantons*/
     }
 
     /**
      * Méthode pour afficher un trajet
-     *
      * @param overlays la liste des overlays
      */
     private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
         KmlDocument kmlToRead = new KmlDocument();
-        String path = Environment.getExternalStorageDirectory().toString() + "/osmdroid/kml/" + nomFichier + ".kml";
+        String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml/"+nomFichier+".kml";
         File fichier = new File(path);
         kmlToRead.parseKMLFile(fichier);
-        FolderOverlay kmlOverlay = (FolderOverlay) kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
+        kmlOverlay = (FolderOverlay)kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
         overlays.add(kmlOverlay);
         map.invalidate();
-
-        IMapController mapController = map.getController();
-        mapController.setZoom((double) 15); //valeur à adapter en fonction de l'itinéraire
-        BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
-        mapController.setCenter(bb.getCenter());
     }
 
     /**
@@ -196,41 +269,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             }
         });
         map.getOverlays().add(myLocationNewOverlay);
-    }
-
-    public void ajoutMarqueur(double latitude, double longitude, String text) {
-
-        //création de plein de points jusqu'a 100k easy
-        points.add(new LabelledGeoPoint(latitude, longitude, text));
-        // wrap them in a theme
-        SimplePointTheme pt = new SimplePointTheme(points, true);
-
-        // create label style
-        Paint textStyle = new Paint();
-        textStyle.setStyle(Paint.Style.FILL);//Que l'intérieur du texte
-        textStyle.setColor(Color.parseColor("#0000ff"));//Bleu
-        textStyle.setTextAlign(Paint.Align.CENTER);
-        textStyle.setTextSize(20);
-
-        // set some visual options for the overlay
-        // we use here MAXIMUM_OPTIMIZATION algorithm, which works well with >100k points
-        SimpleFastPointOverlayOptions opt = SimpleFastPointOverlayOptions.getDefaultStyle()
-                .setAlgorithm(SimpleFastPointOverlayOptions.RenderingAlgorithm.MAXIMUM_OPTIMIZATION)
-                .setRadius(7).setIsClickable(true).setCellSize(15).setTextStyle(textStyle);
-
-        // create the overlay with the theme
-        final SimpleFastPointOverlay sfpo = new SimpleFastPointOverlay(pt, opt);
-
-        // onClick callback
-        sfpo.setOnClickListener(new SimpleFastPointOverlay.OnClickListener() {
-            @Override
-            public void onClick(SimpleFastPointOverlay.PointAdapter points, Integer point) {
-                Toast.makeText(map.getContext()
-                        , "You clicked " + ((LabelledGeoPoint) points.get(point)).getLabel()
-                        , Toast.LENGTH_SHORT).show();
-            }
-        });
-        map.getOverlays().add(sfpo);
     }
 
     public void onResume() {
