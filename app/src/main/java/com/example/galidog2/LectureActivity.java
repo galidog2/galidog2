@@ -67,7 +67,12 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private Location location;
     private Polyline trajet;
     private Marker depart;
+    private Marker arrivee;
+    private ArrayList<Marker> indications;
+
     private boolean onGoing = false;
+    private int distanceEveilMeter = 20;
+    private int compteur=0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -101,6 +106,12 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 Marker marker = (Marker)overlays.get(i);
                 if (marker.getTitle().equals("Départ")){
                     depart = marker;
+                }
+                if (marker.getTitle().equals("Arrivée")){
+                    arrivee = marker;
+                }
+                else{
+                    indications.add(marker);
                 }
             }
         }
@@ -140,6 +151,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             // Projection pour convertir la précision (reçue en mètres) en pixels.
             Projection projection = map.getProjection();
             float accuracy = projection.metersToPixels(location.getAccuracy());
+            float distanceEveilPixel = projection.metersToPixels(distanceEveilMeter);
 
             GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
 
@@ -159,7 +171,16 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                     Toast.makeText(getApplicationContext(),"Revenez sur vos pas, vous vous éloignez du trajet.", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    //Donner les indications...
+                    if (trajet.isCloseTo(indications.get(compteur).getPosition(), accuracy+distanceEveilPixel, map)){
+                        Toast.makeText(getApplicationContext(), "Éveil du " + indications.get(compteur).getTitle(), Toast.LENGTH_LONG).show();
+                    }
+                    else if (trajet.isCloseTo(indications.get(compteur).getPosition(), accuracy, map)){
+                        Toast.makeText(getApplicationContext(), "Indication : " + indications.get(compteur).getTitle(), Toast.LENGTH_LONG).show();
+                        compteur++;
+                    }
+                    else if (trajet.isCloseTo(arrivee.getPosition(), accuracy, map)){
+                        Toast.makeText(getApplicationContext(), "Vous êtes arrivés !", Toast.LENGTH_LONG).show();
+                    }
                 }
             }
 
