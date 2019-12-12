@@ -42,10 +42,10 @@
         app:layout_constraintEnd_toEndOf="@+id/map" />
 
     <Button
-        android:id="@+id/bt_marker"
+        android:id="@+id/bt_cercle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Marker"
+        android:text="Cercle"
         app:layout_constraintBottom_toBottomOf="@+id/map"
         app:layout_constraintEnd_toEndOf="@+id/map"
         app:layout_constraintStart_toStartOf="parent" />
@@ -59,6 +59,16 @@
         android:text="Pause"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/bt_check"
+        android:text="CheckPoint"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginLeft="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="8dp"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

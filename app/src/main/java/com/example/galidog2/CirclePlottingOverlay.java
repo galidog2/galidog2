@@ -4,11 +4,12 @@ import android.graphics.Color;
 
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.Polygon;
 
 import java.util.List;
 
-public class CirclePlottingOverlay {
+public class CirclePlottingOverlay extends Overlay {
     private String adresse = "adresse";
     private double rayonm=3;
     private GeoPoint pt;
