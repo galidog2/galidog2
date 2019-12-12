@@ -1,6 +1,7 @@
 package com.example.galidog2;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -64,7 +66,10 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private GeoPoint dernierPoint;
     private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
 
-    private String MY_USERAGENT = "com.beview.mygeoapp";
+    private String MY_USERAGENT = "Galidog2";
+    private Address adresse;
+    private String st_adresse;
+    private List<Address> listeAdresses = null;
 
     private Polyline polyline;
     KmlDocument kmlDocument = new KmlDocument();
@@ -169,45 +174,112 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         }
     };
 
+    @SuppressLint("StaticFieldLeak")
     private void trouverAdresse(GeoPoint geoPoint) {
-        // Reverse Geocoding
-        GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
-        String theAddress;
+        // Retreive Geocoding data (add this code to an event click listener on a button)
+        new AsyncTask<String, Void, List<Address>>() {
+            @Override
+            protected List<Address> doInBackground(String... strings) {
+//                 Reverse Geocoding
+                GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
 
-        try {
-            List<Address> addresses = geocoder.getFromLocation(geoPoint.getLatitude(), geoPoint.getLongitude(), 1);
-            StringBuilder sb = new StringBuilder();
-            if (addresses.size() > 0) {
-                Address address = addresses.get(0);
-                int n = address.getMaxAddressLineIndex();
-                Log.d("Test", "CountryName: " + address.getCountryName());
-                Log.d("Test", "CountryCode: " + address.getCountryCode());
-                Log.d("Test", "PostalCode " + address.getPostalCode());
+                try {
+                    listeAdresses = geocoder.getFromLocation(dernierPoint.getLatitude(), dernierPoint.getLongitude(), 1);
+                    adresse = listeAdresses.get(0);
+
+                    StringBuilder sb = new StringBuilder();
+                    if (listeAdresses.size() > 0) {
+                        Address address = listeAdresses.get(0);
+                        int n = address.getMaxAddressLineIndex();
+                        Log.d("Test", "CountryName: " + address.getCountryName());
+                        Log.d("Test", "CountryCode: " + address.getCountryCode());
+                        Log.d("Test", "PostalCode " + address.getPostalCode());
 //                        Log.d("Test", "FeatureName " + address.getFeatureName()); //null
-                Log.d("Test", "City: " + address.getAdminArea());
-                Log.d("Test", "Locality: " + address.getLocality());
-                Log.d("Test", "Premises: " + address.getPremises()); //null
-                Log.d("Test", "SubAdminArea: " + address.getSubAdminArea());
-                Log.d("Test", "SubLocality: " + address.getSubLocality());
+                        Log.d("Test", "City: " + address.getAdminArea());
+                        Log.d("Test", "Locality: " + address.getLocality());
+                        Log.d("Test", "Premises: " + address.getPremises()); //null
+                        Log.d("Test", "SubAdminArea: " + address.getSubAdminArea());
+                        Log.d("Test", "SubLocality: " + address.getSubLocality());
 //                        Log.d("Test", "SubThoroughfare: " + address.getSubThoroughfare()); //null
 //                        Log.d("Test", "getThoroughfare: " + address.getThoroughfare()); //null
-                Log.d("Test", "Locale: " + address.getLocale());
-                for (int i = 0; i <= n; i++) {
-                    if (i != 0)
-                        sb.append(", ");
-                    sb.append(address.getAddressLine(i));
+                        Log.d("Test", "Locale: " + address.getLocale());
+                        for (int i = 0; i <= n; i++) {
+                            if (i != 0)
+                                sb.append(", ");
+                            sb.append(address.getAddressLine(i));
+                        }
+                        st_adresse = sb.toString();
+                        Toast.makeText(AjoutTrajetActivity.this, "Adresse : " + st_adresse, Toast.LENGTH_SHORT).show();
+                    } else {
+                        adresse = null;
+                        Toast.makeText(AjoutTrajetActivity.this, "Echec ...", Toast.LENGTH_SHORT).show();
+                    }
+                    return listeAdresses;
+                } catch (IOException e) {
+                    adresse = null;
                 }
-                theAddress = sb.toString();
-            } else {
-                theAddress = null;
+                if (adresse != null) {
+                    Log.d("Test", "Adresse: " + st_adresse);
+                }
+                return null;
             }
-            Toast.makeText(this, theAddress, Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            theAddress = null;
-        }
-        if (theAddress != null) {
-            Log.d("Test", "Address: " + theAddress);
-        }
+//            @Override
+//            protected List<Address> doInBackground(String... strings) {
+//                GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
+//                try {
+//                    listeAdresses = geocoder.getFromLocation(startPoint.getLatitude(),startPoint.getLongitude(), 1);
+//                    Toast.makeText(AjoutTrajetActivity.this, "Adresse : "+listeAdresses.get(0), Toast.LENGTH_SHORT).show();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    Toast.makeText(AjoutTrajetActivity.this, "Geocoding error! Internet available?", Toast.LENGTH_SHORT).show();
+//                }
+//                return listeAdresses;
+//            }
+
+//            @Override
+//            protected Void doInBackground(Void... voids) {
+//                // Reverse Geocoding
+//                GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
+//
+//                try {
+//                    List<Address> addresses = geocoder.getFromLocation(startPoint.getLatitude(), startPoint.getLongitude(), 1);
+//
+//                    adresse = addresses.get(0);
+////                    StringBuilder sb = new StringBuilder();
+////                    if (addresses.size() > 0) {
+////                        Address address = addresses.get(0);
+////                        int n = address.getMaxAddressLineIndex();
+////                        Log.d("Test", "CountryName: " + address.getCountryName());
+////                        Log.d("Test", "CountryCode: " + address.getCountryCode());
+////                        Log.d("Test", "PostalCode " + address.getPostalCode());
+//////                        Log.d("Test", "FeatureName " + address.getFeatureName()); //null
+////                        Log.d("Test", "City: " + address.getAdminArea());
+////                        Log.d("Test", "Locality: " + address.getLocality());
+////                        Log.d("Test", "Premises: " + address.getPremises()); //null
+////                        Log.d("Test", "SubAdminArea: " + address.getSubAdminArea());
+////                        Log.d("Test", "SubLocality: " + address.getSubLocality());
+//////                        Log.d("Test", "SubThoroughfare: " + address.getSubThoroughfare()); //null
+//////                        Log.d("Test", "getThoroughfare: " + address.getThoroughfare()); //null
+////                        Log.d("Test", "Locale: " + address.getLocale());
+////                        for (int i = 0; i <= n; i++) {
+////                            if (i != 0)
+////                                sb.append(", ");
+////                            sb.append(address.getAddressLine(i));
+////                        }
+////                        adresse = sb.toString();
+////                    } else {
+////                        adresse = null;
+////                    }
+//                    Toast.makeText(AjoutTrajetActivity.this, "Adresse : " + adresse, Toast.LENGTH_SHORT).show();
+//                } catch (IOException e) {
+//                    adresse = null;
+//                }
+//                if (adresse != null) {
+//                    Log.d("Test", "Adresse: " + adresse);
+//                }
+//                return null;
+//            }
+        }.execute();
     }
 
     private void tracerMarqueur(String titre) {
@@ -216,7 +288,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         marker.setIcon(getDrawable(R.drawable.marqueur));
         marker.setSubDescription("Description possible");
-        marker.setSnippet("Adresse ?");
+        marker.setSnippet("Adresse ?"); //TODO : Utiliser trouverAdresse() ici
         marker.setTitle(titre);
         listeMarqueurs.add(marker);
         map.getOverlays().add(marker);
@@ -337,7 +409,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private void tracerPolyline() {
         polyline.setWidth(8f);
 
-        int minTime = 2000;
+        int minTime = 10000;
         int minDistance = 2;
 
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
