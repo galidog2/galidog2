@@ -184,7 +184,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
                 GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
 
                 try {
-                    listeAdresses = geocoder.getFromLocation(dernierPoint.getLatitude(), dernierPoint.getLongitude(), 1);
+                    listeAdresses = geocoder.getFromLocation(50.605965, 3.137047, 1);
                     adresse = listeAdresses.get(0);
 
                     StringBuilder sb = new StringBuilder();
