@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.util.Log;
 import android.view.MotionEvent;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.osmdroid.api.IMapView;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
@@ -21,12 +22,36 @@ import java.util.List;
 
 public class CirclePlottingOverlay extends Overlay {
 
-    double rayonm=3;
-    GeoPoint pt;
+    private String adresse = "adresse";
+    private double rayonm=3;
+    private GeoPoint pt;
+    private int couleur = Color.RED;
+    private int numeroCercle;
 
     public CirclePlottingOverlay(GeoPoint pt) {
         super();
         this.pt = pt;
+    }
+
+
+    /**
+     * GETTERS & SETTERS
+     */
+
+    public int getNumeroCercle(){
+        return numeroCercle;
+    }
+
+    public void setNumeroCercle(int i){
+        this.numeroCercle=i;
+    }
+
+    public void setColor(int couleur){
+        this.couleur=couleur;
+    }
+
+    public int getCouleur(){
+        return couleur;
     }
 
     public double getLatitude(){
@@ -37,9 +62,18 @@ public class CirclePlottingOverlay extends Overlay {
         return pt.getLongitude();
     }
 
+    public String getAdresse(){
+        return adresse;
+    }
 
-    public CirclePlottingOverlay(GeoPoint pt, double rayonm) {
+    public void setAdresse(String newAdresse){
+        adresse=newAdresse;
+    }
+
+
+    public CirclePlottingOverlay(GeoPoint pt, double rayonm, int numeroCercle) {
         super();
+        this.numeroCercle=numeroCercle;
         this.rayonm=rayonm;
         this.pt = pt;
     }
@@ -48,13 +82,18 @@ public class CirclePlottingOverlay extends Overlay {
         return rayonm;
     }
 
+    /**
+     * DrawCircle
+     */
+
 
     public void drawCircle(final MapView mapView, final int color){
         List<GeoPoint> circle = Polygon.pointsAsCircle(pt, rayonm);
         Polygon p = new Polygon(mapView);
         p.setPoints(circle);
         p.setFillColor(color);
-        p.setTitle("A circle");
+        p.setTitle("Cercle " + numeroCercle);
+        p.setSnippet(adresse);
         mapView.getOverlayManager().add(p);
         mapView.invalidate();
     }

@@ -56,7 +56,7 @@ import androidx.appcompat.app.AppCompatActivity;
 /**
  * Activity générant la carte pour se diriger
  */
-public class LectureActivity extends AppCompatActivity implements MapEventsReceiver {
+public class LectureActivity<ListCircleEveil> extends AppCompatActivity implements MapEventsReceiver {
 
     private static final String TAG = "LectureActivity";
 
@@ -74,19 +74,19 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     //Boutton pour checker si on est dans un cercle
     private Button CheckPoint;
 
-    //Liste les latitude longitude et rayon en double de chaque cercle
-    private double[][] ListCircleEveilDouble = new double[5][3];
-    private double[][] ListCircleValidationDouble = new double[5][3];
-
     //Liste les CirclePlottingOverlay (les cercles)
-    private CirclePlottingOverlay[] ListCircleEveil = new CirclePlottingOverlay[5];
-    private CirclePlottingOverlay[] ListCircleValidation = new CirclePlottingOverlay[5];
+    private ArrayList<CirclePlottingOverlay> ListCircleEveil = new ArrayList<>();
+    private ArrayList<CirclePlottingOverlay> ListCircleValidation = new ArrayList<>();
 
 
     //Se valide si on est dans le cercle de validation
     private Switch CheckValidation;
     //Se valide si on est dans le cercle d'éveil
     private Switch CheckEveil;
+
+
+    //Cet entier permet de suivre l'avancée dans les cercles.
+    private int NombreCercle=0;
 
 
 
@@ -111,27 +111,13 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
         map.getOverlays().add(0,mapEventsOverlay);
-
-
         myLocationNewOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
+
         Circle = findViewById(R.id.DrawCircle);
         Circle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 5);
-                cercle_eveil.drawCircle(map, Color.RED);
-                map.getOverlays().add(cercle_eveil);
-                ListCircleEveil[0]=cercle_eveil;
-                ListCircleEveilDouble[0][0]=cercle_eveil.getLatitude();
-                ListCircleEveilDouble[0][1]=cercle_eveil.getLongitude();
-                ListCircleEveilDouble[0][2]=cercle_eveil.getRayon();
-                CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 2);
-                cercle_validation.drawCircle(map, Color.RED);
-                map.getOverlays().add(cercle_validation);
-                ListCircleValidation[0]=cercle_validation;
-                ListCircleValidationDouble[0][0]=cercle_validation.getLatitude();
-                ListCircleValidationDouble[0][1]=cercle_validation.getLongitude();
-                ListCircleValidationDouble[0][2]=cercle_validation.getRayon();
+                createCircle();
             }
         });
 
@@ -140,50 +126,55 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         CheckPoint.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "onClick: test fonction appuie bouton");
-                CheckCircleEveil(myLocationNewOverlay.getMyLocation());
-                Log.d(TAG, "onClick: test fonction boutton 2");
-                CheckCircleValidation(myLocationNewOverlay.getMyLocation());
+                if (NombreCercle<ListCircleValidation.size()) {
+                    CheckCircleEveil(myLocationNewOverlay.getMyLocation(), NombreCercle);
+                    CheckCircleValidation(myLocationNewOverlay.getMyLocation(), NombreCercle);
+                }
             }
         });
 
-        CheckEveil = findViewById(R.id.CheckEveil);
-        CheckValidation = findViewById(R.id.CheckValidation);
-
-
-        CheckEveil.setChecked(true);
-
     }
-
-
-
 
 
     private void navigation(){
-
     }
+
+
+    //Fonction pour créer les cercles d'Eveil et de Validation
+
+    private void createCircle(){
+                //Cercle d'Eveil
+                CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 8, NombreCercle);
+                cercle_eveil.drawCircle(map, Color.RED);
+        ListCircleEveil.add(cercle_eveil);
+                map.getOverlays().add(cercle_eveil);
+
+                //Cercle de Validation
+                CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 3, NombreCercle);
+                cercle_validation.drawCircle(map, Color.RED);
+                map.getOverlays().add(cercle_validation);
+                ListCircleValidation.add(cercle_validation);
+
+            }
+
 
     //Fonction pour changer la couleur du cercle d'Eveil
-    private void ModifColorEveil(int n){
-         ListCircleEveil[n].changeColor(map, Color.GREEN);
-    }
+    private void ModifColorEveil(int n){ ListCircleEveil.get(n).changeColor(map, Color.GREEN); }
 
     //Fonction pour changer la couleur du cercle de validation
-    private void ModifColorValidation(int n){
-        ListCircleValidation[n].changeColor(map, Color.GREEN);
-    }
+    private void ModifColorValidation(int n){ ListCircleValidation.get(n).changeColor(map, Color.GREEN); }
 
 
     //On check si on est dans le cercle d'éveil du point n
 
 
-            public void CheckCircleEveil(GeoPoint p) {
+            public void CheckCircleEveil(GeoPoint p, int n) {
                 double latitude = p.getLatitude();
                 double longitude = p.getLongitude();
                 Log.d(TAG, "onLocationChanged: test fonction changement couleur");
-                if (Math.pow((latitude - ListCircleEveilDouble[0][0])*111.11, 2) + Math.pow((longitude - ListCircleEveilDouble[0][1])*111.11*Math.cos(Math.toRadians(latitude)), 2) - Math.pow(ListCircleEveilDouble[0][2]/1000, 2) < 0) {
+                if (Math.pow((latitude - ListCircleEveil.get(n).getLatitude())*111.11, 2) + Math.pow((longitude - ListCircleEveil.get(n).getLongitude())*111.11*Math.cos(Math.toRadians(latitude)), 2) - Math.pow(ListCircleEveil.get(n).getRayon()/1000, 2) < 0) {
                     //On modifie la couleur
-                    ModifColorEveil(0);
+                    ModifColorEveil(n);
                 }
             }
 
@@ -191,12 +182,15 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     //On check si on est dans le cercle de validation du point n
 
 
-            public void CheckCircleValidation(GeoPoint p) {
+            public void CheckCircleValidation(GeoPoint p, int n) {
                 double latitude = p.getLatitude();
                 double longitude = p.getLongitude();
-                if (Math.pow((latitude - ListCircleValidationDouble[0][0])*111.11, 2) + Math.pow((longitude - ListCircleValidationDouble[0][1])*111.11*Math.cos(Math.toRadians(latitude)), 2) - Math.pow(ListCircleValidationDouble[0][2]/1000, 2) < 0) {
+                if (Math.pow((latitude - ListCircleValidation.get(n).getLatitude())*111.11, 2) + Math.pow((longitude - ListCircleValidation.get(n).getLongitude())*111.11*Math.cos(Math.toRadians(latitude)), 2) - Math.pow(ListCircleValidation.get(n).getRayon()/1000, 2) < 0) {
                     //On modifie la couleur
-                    ModifColorValidation(0);
+                    ModifColorValidation(n);
+                    if (ListCircleValidation.size()>NombreCercle){
+                        NombreCercle+=1;
+                    }
                 }
             }
 

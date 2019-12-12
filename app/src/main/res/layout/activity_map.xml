@@ -34,7 +34,7 @@
         android:id="@+id/DrawCircle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Point d'intérêt"
+        android:text="DrawCircle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         android:layout_marginBottom="8dp"
@@ -49,36 +49,6 @@
         android:layout_marginLeft="8dp"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="8dp"/>
-
-    <Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/CheckEveil"
-        android:text="Dans cercle d'Eveil"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="60dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginLeft="8dp"/>
-
-    <Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/CheckValidation"
-        android:text="Dans cercle de Validation"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="100dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginLeft="8dp"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/RoueDirection"
-        android:text="Roue de Direction"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginRight="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="8dp"/>
 
 
 
