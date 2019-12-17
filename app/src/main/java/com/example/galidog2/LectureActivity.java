@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
@@ -27,6 +29,7 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
@@ -44,8 +47,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-//import org.osmdroid.samplefragments.drawing.DrawPolylineWithArrows;
-
 //TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
 
 /**
@@ -62,7 +63,14 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
     private String nomFichier;
     //Liste des points à marquer
-    List<IGeoPoint> points = new ArrayList<>();
+    List<IGeoPoint> points = new ArrayList<>(); //A supprimer avec AjoutMarqueurs
+    private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
+    //TODO : récupérer la liste des markers dans KMLDocument !
+
+    private ArrayList<CirclePlottingOverlay> listCircleEveil = new ArrayList<>();
+    private ArrayList<CirclePlottingOverlay> listCircleValidation = new ArrayList<>();
+    private int nombreCercle = 0;//Cet entier permet de suivre l'avancée dans les cercles
+    private Button bt_check;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -81,10 +89,32 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
+        bt_check = findViewById(R.id.bt_cercle);
         miseEnPlaceCarte();
 
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
         map.getOverlays().add(0, mapEventsOverlay);
+
+        tracerCercle();
+
+        bt_check.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (nombreCercle < listCircleValidation.size()) {
+                    CheckCircleEveil(myLocationNewOverlay.getMyLocation(), nombreCercle);
+                    CheckCircleValidation(myLocationNewOverlay.getMyLocation(), nombreCercle);
+                }
+            }
+        });
+    }
+
+    /**
+     * Méthode tracant les cercles rouges d'éveil et de validation
+     */
+    private void tracerCercle() {
+        for (int i = 0; i <= listeMarqueurs.size(); i++) {
+            createCircle(listeMarqueurs.get(i).getPosition());
+        }
     }
 
 
@@ -93,6 +123,62 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
      */
     private void navigation() {
 
+    }
+
+    /**
+     * Fonction pour créer les cercles d'Eveil et de Validation
+     */
+
+    private void createCircle(GeoPoint geoPoint) {
+        //Cercle d'Eveil
+        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, nombreCercle);
+        cercle_eveil.drawCircle(map, Color.RED);
+        listCircleEveil.add(cercle_eveil);
+        map.getOverlays().add(cercle_eveil);
+
+        //Cercle de Validation
+        CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(geoPoint, 3, nombreCercle);
+        cercle_validation.drawCircle(map, Color.RED);
+        map.getOverlays().add(cercle_validation);
+        listCircleValidation.add(cercle_validation);
+    }
+
+    /**
+     * Méthodes pour les cercles d'éveil et de validation
+     */
+
+    //Fonction pour changer la couleur du cercle d'Eveil
+    private void ModifColorEveil(int n) {
+        listCircleEveil.get(n).changeColor(map, Color.GREEN);
+    }
+
+    //Fonction pour changer la couleur du cercle de validation
+    private void ModifColorValidation(int n) {
+        listCircleValidation.get(n).changeColor(map, Color.GREEN);
+    }
+
+    //On check si on est dans le cercle d'éveil du point numéro n
+    public void CheckCircleEveil(GeoPoint p, int numero) {
+        double latitude = p.getLatitude();
+        double longitude = p.getLongitude();
+        Log.d(TAG, "onLocationChanged: test fonction changement couleur");
+        if (Math.pow((latitude - listCircleEveil.get(numero).getLatitude()) * 111.11, 2) + Math.pow((longitude - listCircleEveil.get(numero).getLongitude()) * 111.11 * Math.cos(Math.toRadians(latitude)), 2) - Math.pow(listCircleEveil.get(numero).getRayon() / 1000, 2) < 0) {
+            //On modifie la couleur
+            ModifColorEveil(numero);
+        }
+    }
+
+    //On check si on est dans le cercle de validation du point numéro n
+    public void CheckCircleValidation(GeoPoint p, int numero) {
+        double latitude = p.getLatitude();
+        double longitude = p.getLongitude();
+        if (Math.pow((latitude - listCircleValidation.get(numero).getLatitude()) * 111.11, 2) + Math.pow((longitude - listCircleValidation.get(numero).getLongitude()) * 111.11 * Math.cos(Math.toRadians(latitude)), 2) - Math.pow(listCircleValidation.get(numero).getRayon() / 1000, 2) < 0) {
+            //On modifie la couleur
+            ModifColorValidation(numero);
+            if (listCircleValidation.size() > nombreCercle) {
+                nombreCercle += 1;
+            }
+        }
     }
 
     private void demandePermissionsLocalisation() {

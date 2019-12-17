@@ -78,7 +78,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private ArrayList<CirclePlottingOverlay> listCircleEveil = new ArrayList<>();
     private ArrayList<CirclePlottingOverlay> listCircleValidation = new ArrayList<>();
     private int nombreCercle = 0;//Cet entier permet de suivre l'avancée dans les cercles
-    private Button bouton_check;
 
     private Polyline polyline;
     KmlDocument kmlDocument = new KmlDocument();
@@ -107,7 +106,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         bouton_arret = findViewById(R.id.bt_arret);
         bouton_cercle = findViewById(R.id.bt_cercle);
         switchMyLocation = findViewById(R.id.switchMyLocation);
-        bouton_check = findViewById(R.id.bt_check);
         miseEnPlaceCarte();
 
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay((MapEventsReceiver) this);
@@ -137,19 +135,9 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         bouton_cercle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                createCircle();
+                createCircle(dernierPoint);
                 tracerMarqueur("Point n°: " + nombreCercle);
 //                trouverAdresse(dernierPoint); //Trouver l'adresse du marker pour le mettre en description de marker
-            }
-        });
-
-        bouton_check.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (nombreCercle < listCircleValidation.size()) {
-                    CheckCircleEveil(myLocationNewOverlay.getMyLocation(), nombreCercle);
-                    CheckCircleValidation(myLocationNewOverlay.getMyLocation(), nombreCercle);
-                }
             }
         });
     }
@@ -196,15 +184,15 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
      * Fonction pour créer les cercles d'Eveil et de Validation
      */
 
-    private void createCircle() {
+    private void createCircle(GeoPoint geoPoint) {
         //Cercle d'Eveil
-        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 8, nombreCercle);
+        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, nombreCercle);
         cercle_eveil.drawCircle(map, Color.RED);
         listCircleEveil.add(cercle_eveil);
         map.getOverlays().add(cercle_eveil);
 
         //Cercle de Validation
-        CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 3, nombreCercle);
+        CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(geoPoint, 3, nombreCercle);
         cercle_validation.drawCircle(map, Color.RED);
         map.getOverlays().add(cercle_validation);
         listCircleValidation.add(cercle_validation);
@@ -319,42 +307,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     }
 
     /**
-     * Méthodes pour les cercles d'éveil et de validation
+     * Trace un marqueur
      */
-
-    //Fonction pour changer la couleur du cercle d'Eveil
-    private void ModifColorEveil(int n) {
-        listCircleEveil.get(n).changeColor(map, Color.GREEN);
-    }
-
-    //Fonction pour changer la couleur du cercle de validation
-    private void ModifColorValidation(int n) {
-        listCircleValidation.get(n).changeColor(map, Color.GREEN);
-    }
-
-    //On check si on est dans le cercle d'éveil du point numéro n
-    public void CheckCircleEveil(GeoPoint p, int numero) {
-        double latitude = p.getLatitude();
-        double longitude = p.getLongitude();
-        Log.d(TAG, "onLocationChanged: test fonction changement couleur");
-        if (Math.pow((latitude - listCircleEveil.get(numero).getLatitude()) * 111.11, 2) + Math.pow((longitude - listCircleEveil.get(numero).getLongitude()) * 111.11 * Math.cos(Math.toRadians(latitude)), 2) - Math.pow(listCircleEveil.get(numero).getRayon() / 1000, 2) < 0) {
-            //On modifie la couleur
-            ModifColorEveil(numero);
-        }
-    }
-
-    //On check si on est dans le cercle de validation du point numéro n
-    public void CheckCircleValidation(GeoPoint p, int numero) {
-        double latitude = p.getLatitude();
-        double longitude = p.getLongitude();
-        if (Math.pow((latitude - listCircleValidation.get(numero).getLatitude()) * 111.11, 2) + Math.pow((longitude - listCircleValidation.get(numero).getLongitude()) * 111.11 * Math.cos(Math.toRadians(latitude)), 2) - Math.pow(listCircleValidation.get(numero).getRayon() / 1000, 2) < 0) {
-            //On modifie la couleur
-            ModifColorValidation(numero);
-            if (listCircleValidation.size() > nombreCercle) {
-                nombreCercle += 1;
-            }
-        }
-    }
 
     private void tracerMarqueur(String titre) {
         Marker marker = new Marker(map);
