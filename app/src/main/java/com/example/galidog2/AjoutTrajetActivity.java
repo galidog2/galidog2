@@ -138,6 +138,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             @Override
             public void onClick(View v) {
                 createCircle();
+                tracerMarqueur("Point n°: " + nombreCercle);
 //                trouverAdresse(dernierPoint); //Trouver l'adresse du marker pour le mettre en description de marker
             }
         });
@@ -452,8 +453,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private void enregistrerTrajet() {
         kmlDocument.mKmlRoot.addOverlay(polyline, kmlDocument);
         kmlDocument.mKmlRoot.addOverlays(listeMarqueurs, kmlDocument);
-        kmlDocument.mKmlRoot.addOverlays(listCircleEveil, kmlDocument);
-        kmlDocument.mKmlRoot.addOverlays(listCircleValidation, kmlDocument);
+//        kmlDocument.mKmlRoot.addOverlays(listCircleEveil, kmlDocument);
+//        kmlDocument.mKmlRoot.addOverlays(listCircleValidation, kmlDocument);
 
         File localFile = cheminStockage(nomFichier + ".kml");
         kmlDocument.saveAsKML(localFile);
