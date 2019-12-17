@@ -2,15 +2,12 @@ package com.example.galidog2;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.location.LocationListener;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -19,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,14 +47,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 //TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
 
 /**
  * Activity générant la carte pour se diriger
  */
-public class LectureActivity<ListCircleEveil> extends AppCompatActivity implements MapEventsReceiver {
+public class LectureActivity extends AppCompatActivity implements MapEventsReceiver {
 
     private static final String TAG = "LectureActivity";
 
@@ -87,6 +83,22 @@ public class LectureActivity<ListCircleEveil> extends AppCompatActivity implemen
 
     //Cet entier permet de suivre l'avancée dans les cercles.
     private int NombreCercle=0;
+
+    private TextView Test;
+
+
+    /**
+     * La liste Distance correspond à la liste des distances entre les points i et i+1
+     * La liste DistanceSup est la liste des distance entre les points i et i+2
+     * La liste Information est la liste correspondant à la direction à prendre pour aller vers le prochain point
+     * @param savedInstanceState
+     */
+
+    private Button constructionTrajet;
+
+    private ArrayList<Double> Distance = new ArrayList<>();
+    private ArrayList<Double> DistanceSup = new ArrayList<>();
+    private ArrayList<Double> Information = new ArrayList<>();
 
 
 
@@ -133,6 +145,17 @@ public class LectureActivity<ListCircleEveil> extends AppCompatActivity implemen
             }
         });
 
+        constructionTrajet = findViewById(R.id.construitTrajet);
+        constructionTrajet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG, "onClick: test1 : avant calcul");
+                construction();
+            }
+        });
+
+        Test = findViewById(R.id.affichageDistance);
+
     }
 
 
@@ -144,10 +167,10 @@ public class LectureActivity<ListCircleEveil> extends AppCompatActivity implemen
 
     private void createCircle(){
                 //Cercle d'Eveil
-                CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 8, NombreCercle);
-                cercle_eveil.drawCircle(map, Color.RED);
+        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 8, NombreCercle);
+        cercle_eveil.drawCircle(map, Color.RED);
         ListCircleEveil.add(cercle_eveil);
-                map.getOverlays().add(cercle_eveil);
+        map.getOverlays().add(cercle_eveil);
 
                 //Cercle de Validation
                 CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(myLocationNewOverlay.getMyLocation(), 3, NombreCercle);
@@ -171,7 +194,7 @@ public class LectureActivity<ListCircleEveil> extends AppCompatActivity implemen
             public void CheckCircleEveil(GeoPoint p, int n) {
                 double latitude = p.getLatitude();
                 double longitude = p.getLongitude();
-                Log.d(TAG, "onLocationChanged: test fonction changement couleur");
+                Log.i(TAG, "onLocationChanged: test fonction changement couleur");
                 if (Math.pow((latitude - ListCircleEveil.get(n).getLatitude())*111.11, 2) + Math.pow((longitude - ListCircleEveil.get(n).getLongitude())*111.11*Math.cos(Math.toRadians(latitude)), 2) - Math.pow(ListCircleEveil.get(n).getRayon()/1000, 2) < 0) {
                     //On modifie la couleur
                     ModifColorEveil(n);
@@ -194,6 +217,77 @@ public class LectureActivity<ListCircleEveil> extends AppCompatActivity implemen
                 }
             }
 
+
+//TODO: création du trajet et information entre les points
+
+    /**
+     * Bouton (plus tard remplacé par une information vocale pour ordonner le calcul des informations
+     * Détermination de la distance entre les points (listes d'entier qui comprendra les distances, l'indice i sera la distance entre le point i et le point i+1)
+     * Détermination de l'information vers le point suivant (liste de string qui comprendra les informations horaires, ATTENTION il y aura besoin d'une liste des distance entre les points i et i+2 pour calculer les infos
+     */
+
+
+
+    private void construction(){
+        Log.i(TAG, "construction: test1: avant boucle for");
+        for (int i=0; i<ListCircleEveil.size()-2; i++){
+            Log.i(TAG, "construction: test1 : dans boucle for");
+            Distance.add(calculDistance(i,i+1));
+            DistanceSup.add(calculDistance(i,i+2));
+            Information.add(calculInformation(i));
+        }
+        Test.setText("Les distances sont " + "\n" + Distance.get(0) + "\n" + Distance.get(1) + "\n" + DistanceSup.get(0) + "\n" + Information.get(0) + "\n" + Information.get(1));
+    }
+
+
+
+    public double calculDistance(int i,int j){
+        double latitudei = ListCircleEveil.get(i).getLatitude();
+        double longitudei = ListCircleEveil.get(i).getLongitude();
+        double latitudej = ListCircleEveil.get(j).getLatitude();
+        double longitudej = ListCircleEveil.get(j).getLongitude();
+        double Rayon = 6371 ; // km
+        double x = (longitudej - longitudei) * Math.cos((latitudei + latitudej) / 2);
+        double y = (latitudej - latitudei);
+        double distance = Math.sqrt(x * x + y * y) * Rayon;
+        if (distance==0){
+            return 0;
+        }
+        return Math.ceil(distance*10);
+    }
+
+    public double calculInformation(int i){
+        double d1=calculDistance(i,i+1);
+        double d2=calculDistance(i+1, i+2);
+        double d3=calculDistance(i, i+2);
+
+        //Calcul de l'angle entre les 2 segments
+        double gamma=calculAngle(d1,d2,d3);
+
+        if (facteurDirection(i)>0){
+            return 6-Math.floor(6*gamma/Math.PI);
+        }
+        return 6+Math.floor(6*gamma/Math.PI);
+
+    }
+
+
+    //Fonction pour calculer l'angle entre 2 segments
+    public double calculAngle(double d1, double d2, double d3){
+            return Math.acos((Math.pow(d1,2)+Math.pow(d2,2)-Math.pow(d3,2))/(2*d1*d2));
+    }
+
+    //Fonction pour calculer la pente
+    public double facteurDirection(int i){
+        double latitudei = ListCircleEveil.get(i).getLatitude();
+        double longitudei = ListCircleEveil.get(i).getLongitude();
+        double latitudej = ListCircleEveil.get(i+1).getLatitude();
+        double longitudej = ListCircleEveil.get(i+1).getLongitude();
+        double latitudeh = ListCircleEveil.get(i+2).getLatitude();
+        double longitudeh = ListCircleEveil.get(i+2).getLongitude();
+
+        return (latitudej-latitudei)*(longitudeh-longitudei)-(longitudej-longitudei)*(latitudeh-latitudei);
+    }
 
 
 
