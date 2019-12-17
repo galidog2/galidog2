@@ -230,13 +230,17 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     private void construction(){
         Log.i(TAG, "construction: test1: avant boucle for");
-        for (int i=0; i<ListCircleEveil.size()-2; i++){
+        for (int i=0; i<ListCircleEveil.size()-1; i++){
             Log.i(TAG, "construction: test1 : dans boucle for");
-            Distance.add(calculDistance(i,i+1));
-            DistanceSup.add(calculDistance(i,i+2));
-            Information.add(calculInformation(i));
+            if (i+1!=ListCircleEveil.size()){
+                Distance.add(calculDistance(i,i+1));
+            }
+            if (i+2!=ListCircleEveil.size()) {
+                DistanceSup.add(calculDistance(i, i + 2));
+                Information.add(calculInformation(i));
+            }
         }
-        Test.setText("Les distances sont " + "\n" + Distance.get(0) + "\n" + Distance.get(1) + "\n" + DistanceSup.get(0) + "\n" + Information.get(0) + "\n" + Information.get(1));
+        Test.setText("Les distances sont " + "\n" + Distance.get(0) + "\n" + Distance.get(1) + "\n" + DistanceSup.get(0) + "\n" + Information.get(0));
     }
 
 
