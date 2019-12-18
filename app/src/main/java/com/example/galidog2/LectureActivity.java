@@ -31,6 +31,7 @@ import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
@@ -62,8 +63,10 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
     private String nomFichier;
+    private FolderOverlay kmlOverlay;
+    private Polyline trajet;
     //Liste des points à marquer
-    List<IGeoPoint> points = new ArrayList<>(); //A supprimer avec AjoutMarqueurs
+    private List<IGeoPoint> points = new ArrayList<>(); //A supprimer avec AjoutMarqueurs
     private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
     //TODO : récupérer la liste des markers dans KMLDocument !
 
@@ -89,11 +92,13 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
-        bt_check = findViewById(R.id.bt_cercle);
+        bt_check = findViewById(R.id.bt_check);
         miseEnPlaceCarte();
 
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
         map.getOverlays().add(0, mapEventsOverlay);
+
+        recupererFichier();
 
         tracerCercle();
 
@@ -112,35 +117,49 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
      * Méthode tracant les cercles rouges d'éveil et de validation
      */
     private void tracerCercle() {
-        for (int i = 0; i <= listeMarqueurs.size(); i++) {
+        for (int i = 0; i < listeMarqueurs.size(); i++) {
             createCircle(listeMarqueurs.get(i).getPosition());
         }
     }
 
+    /**
+     * Méthode pour récupérer les fichiers sauvegardés
+     */
+    private void recupererFichier() {
+        List<Overlay> overlays = kmlOverlay.getItems();
+        trajet = new Polyline();
+        for (int i = 0; i < overlays.size(); i++) {
+            if (overlays.get(i) instanceof Polyline) {
+                trajet = (Polyline) overlays.get(i);
+            } else if (overlays.get(i) instanceof Marker) {
+                Marker marker = (Marker) overlays.get(i);
+                listeMarqueurs.add(marker);
+            }
+        }
+    }
 
     /**
      * Fonction utilisée lorsque le mal-voyant refait seul la route
      */
     private void navigation() {
-
     }
 
     /**
-     * Fonction pour créer les cercles d'Eveil et de Validation
+     * Méthode pour créer les cercles d'Eveil et de Validation
      */
 
     private void createCircle(GeoPoint geoPoint) {
         //Cercle d'Eveil
-        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, nombreCercle);
+        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, listCircleEveil.size()+nombreCercle);
         cercle_eveil.drawCircle(map, Color.RED);
         listCircleEveil.add(cercle_eveil);
         map.getOverlays().add(cercle_eveil);
 
         //Cercle de Validation
-        CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(geoPoint, 3, nombreCercle);
+        CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(geoPoint, 3, listCircleValidation.size()+nombreCercle);
         cercle_validation.drawCircle(map, Color.RED);
-        map.getOverlays().add(cercle_validation);
         listCircleValidation.add(cercle_validation);
+        map.getOverlays().add(cercle_validation);
     }
 
     /**
@@ -248,7 +267,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         String path = Environment.getExternalStorageDirectory().toString() + "/osmdroid/kml/" + nomFichier + ".kml";
         File fichier = new File(path);
         kmlToRead.parseKMLFile(fichier);
-        FolderOverlay kmlOverlay = (FolderOverlay) kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
+        kmlOverlay = (FolderOverlay) kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
         overlays.add(kmlOverlay);
         map.invalidate();
 
