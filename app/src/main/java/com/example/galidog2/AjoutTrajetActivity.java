@@ -196,6 +196,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         cercle_validation.drawCircle(map, Color.RED);
         map.getOverlays().add(cercle_validation);
         listCircleValidation.add(cercle_validation);
+
+        nombreCercle=nombreCercle+1;
     }
 
     @SuppressLint("StaticFieldLeak")
