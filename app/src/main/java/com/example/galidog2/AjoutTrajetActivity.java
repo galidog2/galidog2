@@ -133,10 +133,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         });
     }
 
-    /**
-     * On suit la position de l'utilisateur
-     * Listener de la localisation placé là parce que ca marche
-     */
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(android.location.Location location) {
