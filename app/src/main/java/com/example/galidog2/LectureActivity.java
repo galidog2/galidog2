@@ -68,7 +68,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private Polyline trajet;
     private Marker depart;
     private Marker arrivee;
-    private ArrayList<Marker> indications;
+    private ArrayList<Marker> indications = new ArrayList<>();
 
     private boolean onGoing = false;
     private int distanceEveilMeter = 20;
@@ -150,13 +150,20 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
             // Projection pour convertir la précision (reçue en mètres) en pixels.
             Projection projection = map.getProjection();
-            float accuracy = projection.metersToPixels(location.getAccuracy());
+            float accuracyMeters = location.getAccuracy();
+            float accuracyPixels = projection.metersToPixels(accuracyMeters);
             float distanceEveilPixel = projection.metersToPixels(distanceEveilMeter);
 
             GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
 
+            if (accuracyMeters>distanceEveilMeter){
+                Toast.makeText(getApplicationContext(), "Acquisition de la position en cours", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if(!onGoing) {
-                if(trajet.isCloseTo(depart.getPosition(),accuracy, map)){
+                double distance = depart.getPosition().distanceToAsDouble(locationGeo);
+                if(distance<accuracyMeters){
                     onGoing = true;
                     Toast.makeText(getApplicationContext(),"Vous êtes sur le point de départ. Démarrage du trajet", Toast.LENGTH_SHORT).show();
                 }
@@ -167,19 +174,25 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             }
 
             else{
-                if(!trajet.isCloseTo(locationGeo,accuracy, map)){
+                if(!trajet.isCloseTo(locationGeo,accuracyPixels, map)){
                     Toast.makeText(getApplicationContext(),"Revenez sur vos pas, vous vous éloignez du trajet.", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    if (trajet.isCloseTo(indications.get(compteur).getPosition(), accuracy+distanceEveilPixel, map)){
+                    double distance = indications.get(compteur).getPosition().distanceToAsDouble(locationGeo);
+                    if (distance<accuracyMeters+distanceEveilPixel){
+                        if (indications.get(compteur).getTitle().equals("Arrivée")) {
+                            Toast.makeText(getApplicationContext(), "Vous arrivez dans 20m !", Toast.LENGTH_LONG).show();
+                        }
                         Toast.makeText(getApplicationContext(), "Éveil du " + indications.get(compteur).getTitle(), Toast.LENGTH_LONG).show();
                     }
-                    else if (trajet.isCloseTo(indications.get(compteur).getPosition(), accuracy, map)){
-                        Toast.makeText(getApplicationContext(), "Indication : " + indications.get(compteur).getTitle(), Toast.LENGTH_LONG).show();
-                        compteur++;
-                    }
-                    else if (trajet.isCloseTo(arrivee.getPosition(), accuracy, map)){
-                        Toast.makeText(getApplicationContext(), "Vous êtes arrivés !", Toast.LENGTH_LONG).show();
+                    else if (distance<accuracyMeters){
+                        if (indications.get(compteur).getTitle().equals("Arrivée")) {
+                            Toast.makeText(getApplicationContext(), "Vous êtes arrivés !", Toast.LENGTH_LONG).show();
+                        }
+                        else{
+                            Toast.makeText(getApplicationContext(), "Indication : " + indications.get(compteur).getTitle(), Toast.LENGTH_LONG).show();
+                            compteur++;
+                        }
                     }
                 }
             }
