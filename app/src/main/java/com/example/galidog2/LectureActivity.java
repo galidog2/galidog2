@@ -132,8 +132,8 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     }
 
     private void setLocalisationManager(){
-        int minTime = 2000;
-        int minDistance = 2;
+        int minTime = 4000;
+        int minDistance = 4;
 
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 

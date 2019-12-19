@@ -125,7 +125,10 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
                 //On trace le marqueur
                 tracerMarqueur("Point " + numero_marker);
                 numero_marker = numero_marker + 1;
-                trouverAdresse(dernierPoint); //Trouver l'adresse du marker pour le mettre en description de marker
+
+                // Trouver l'adresse du marker pour le mettre en description de marker
+                // EDIT: on ne l'utilise pas tant qu'on n'a pas résolu le problème
+                //trouverAdresse(dernierPoint);
             }
         });
     }
