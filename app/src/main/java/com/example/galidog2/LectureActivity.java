@@ -56,18 +56,20 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     private static final String TAG = "LectureActivity";
 
+    private Toast toast;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
+    private Location location;
+
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
+
     private String nomFichier;
     private FolderOverlay kmlOverlay;
     private List<GeoPoint> mGeoPoints;
-    private Location location;
     private Polyline trajet;
     private Marker depart;
-    private Marker arrivee;
     private ArrayList<Marker> indications = new ArrayList<>();
 
     private boolean onGoing = false;
@@ -89,6 +91,10 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             Log.i("PMR",nomFichier);
         }
 
+        //initialisation du toast :
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setText("");
+
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         switchMyLocation.setChecked(true);
@@ -106,9 +112,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 Marker marker = (Marker)overlays.get(i);
                 if (marker.getTitle().equals("Départ")){
                     depart = marker;
-                }
-                if (marker.getTitle().equals("Arrivée")){
-                    arrivee = marker;
                 }
                 else{
                     indications.add(marker);
@@ -161,36 +164,44 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 return;
             }
 
+            // Bug au niveau des toasts. Le départ s'affiche un nombre incalculable de fois.
             if(!onGoing) {
                 double distance = depart.getPosition().distanceToAsDouble(locationGeo);
                 if(distance<accuracyMeters){
                     onGoing = true;
-                    Toast.makeText(getApplicationContext(),"Vous êtes sur le point de départ. Démarrage du trajet", Toast.LENGTH_SHORT).show();
+                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet");
+                    toast.show();
                 }
 
                 else{
-                    Toast.makeText(getApplicationContext(),"Placez vous sur le point de départ s'il vous plaît.", Toast.LENGTH_SHORT).show();
+                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
+                    toast.show();
                 }
             }
 
             else{
                 if(!trajet.isCloseTo(locationGeo,accuracyPixels, map)){
-                    Toast.makeText(getApplicationContext(),"Revenez sur vos pas, vous vous éloignez du trajet.", Toast.LENGTH_SHORT).show();
+                    toast.setText("Revenez sur vos pas, vous vous éloignez du trajet.");
+                    toast.show();
                 }
                 else{
                     double distance = indications.get(compteur).getPosition().distanceToAsDouble(locationGeo);
                     if (distance<accuracyMeters+distanceEveilPixel){
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
-                            Toast.makeText(getApplicationContext(), "Vous arrivez dans 20m !", Toast.LENGTH_LONG).show();
+                            toast.setText("Vous arrivez dans 20m !");
+                            toast.show();
                         }
-                        Toast.makeText(getApplicationContext(), "Éveil du " + indications.get(compteur).getTitle(), Toast.LENGTH_LONG).show();
+                        toast.setText("Éveil du " + indications.get(compteur).getTitle());
+                        toast.show();
                     }
                     else if (distance<accuracyMeters){
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
-                            Toast.makeText(getApplicationContext(), "Vous êtes arrivés !", Toast.LENGTH_LONG).show();
+                            toast.setText("Vous êtes arrivés !");
+                            toast.show();
                         }
                         else{
-                            Toast.makeText(getApplicationContext(), "Indication : " + indications.get(compteur).getTitle(), Toast.LENGTH_LONG).show();
+                            toast.setText("Indication : ");
+                            toast.show();
                             compteur++;
                         }
                     }
