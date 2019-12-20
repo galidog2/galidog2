@@ -307,19 +307,17 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
      */
     private void miseEnPlaceMyLocationOverlay() {
         myLocationNewOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
-        myLocationNewOverlay.disableMyLocation();
+        myLocationNewOverlay.enableMyLocation();
         map.getOverlays().add(myLocationNewOverlay);
-        //Bouton 'Ma Localisation' on/off
+        //Bouton 'Ma Localisation' suivie ou non
         switchMyLocation.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     demandePermissionsLocalisation();
-                    myLocationNewOverlay.enableMyLocation();
                     myLocationNewOverlay.enableFollowLocation();
                     map.getController().animateTo(myLocationNewOverlay.getMyLocation());
                 } else {
-                    myLocationNewOverlay.disableMyLocation();
                     myLocationNewOverlay.disableFollowLocation();
                 }
             }
@@ -327,7 +325,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         map.getOverlays().add(myLocationNewOverlay);
 
         IMapController mapController = map.getController();
-        mapController.setZoom((double) 15); //valeur à adapter en fonction de l'itinéraire
+        mapController.setZoom((double) 20);
         mapController.setCenter(new GeoPoint(50.636895, 3.063444));
     }
 
