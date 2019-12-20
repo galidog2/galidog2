@@ -11,14 +11,17 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -92,8 +95,10 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         }
 
         //initialisation du toast :
-        toast.setDuration(Toast.LENGTH_SHORT);
-        toast.setText("");
+        toast = Toast.makeText(getApplicationContext(),"",Toast.LENGTH_SHORT);
+
+        //vérification que la localisation a été activée :
+        checkIfLocalisation(this);
 
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
@@ -134,6 +139,32 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     }
 
+    private void checkIfLocalisation(Context context) {
+        if (isLocationEnabled(context)) {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setTitle("Veuillez activer la localisation");
+            alertDialogBuilder.setMessage("La localisation est nécessaire pour démarrer le guidage").setCancelable(false);
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+            alertDialog.dismiss();
+        }
+    }
+
+    public static Boolean isLocationEnabled(Context context)
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // This is new method provided in API 28
+            LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            return lm.isLocationEnabled();
+        } else {
+            // This is Deprecated in API 28
+            int mode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
+                    Settings.Secure.LOCATION_MODE_OFF);
+            return  (mode != Settings.Secure.LOCATION_MODE_OFF);
+
+        }
+    }
+
     private void setLocalisationManager(){
         int minTime = 4000;
         int minDistance = 4;
@@ -160,7 +191,8 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
 
             if (accuracyMeters>distanceEveilMeter){
-                Toast.makeText(getApplicationContext(), "Acquisition de la position en cours", Toast.LENGTH_SHORT).show();
+                toast.setText("Acquisition de la position en cours.");
+                toast.show();
                 return;
             }
 
@@ -169,7 +201,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 double distance = depart.getPosition().distanceToAsDouble(locationGeo);
                 if(distance<accuracyMeters){
                     onGoing = true;
-                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet");
+                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet.");
                     toast.show();
                 }
 

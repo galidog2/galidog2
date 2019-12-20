@@ -8,9 +8,11 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -95,6 +97,9 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
 
+        //vérification si la localisation est activée
+        checkIfLocalisation(this);
+
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay((MapEventsReceiver) this);
         map.getOverlays().add(0, mapEventsOverlay);
 
@@ -167,6 +172,32 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         }
     };
+
+    private void checkIfLocalisation(Context context) {
+        if (isLocationEnabled(context)) {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setTitle("Veuillez activer la localisation");
+            alertDialogBuilder.setMessage("La localisation est nécessaire pour enregistrer un trajet").setCancelable(false);
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+            alertDialog.dismiss();
+        }
+    }
+
+    public static Boolean isLocationEnabled(Context context)
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // This is new method provided in API 28
+            LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            return lm.isLocationEnabled();
+        } else {
+            // This is Deprecated in API 28
+            int mode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
+                    Settings.Secure.LOCATION_MODE_OFF);
+            return  (mode != Settings.Secure.LOCATION_MODE_OFF);
+
+        }
+    }
 
     private void trouverAdresse(GeoPoint geoPoint) {
         // Reverse Geocoding
