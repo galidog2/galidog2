@@ -75,6 +75,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private Marker depart;
     private ArrayList<Marker> indications = new ArrayList<>();
 
+    private boolean displayedBefore = false;
     private boolean onGoing = false;
     private int distanceEveilMeter = 20;
     private int compteur=0;
@@ -196,7 +197,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 return;
             }
 
-            // Bug au niveau des toasts. Le départ s'affiche un nombre incalculable de fois.
+            //TODO : FIX on ne dépasse pas la première indication
             if(!onGoing) {
                 double distance = depart.getPosition().distanceToAsDouble(locationGeo);
                 if(distance<accuracyMeters){
@@ -223,8 +224,11 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                             toast.setText("Vous arrivez dans 20m !");
                             toast.show();
                         }
-                        toast.setText("Éveil du " + indications.get(compteur).getTitle());
-                        toast.show();
+                        if (!displayedBefore){
+                            toast.setText("Éveil du " + indications.get(compteur).getTitle());
+                            toast.show();
+                            displayedBefore = true;
+                        }
                     }
                     else if (distance<accuracyMeters){
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
@@ -235,6 +239,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                             toast.setText("Indication : ");
                             toast.show();
                             compteur++;
+                            displayedBefore = false;
                         }
                     }
                 }
