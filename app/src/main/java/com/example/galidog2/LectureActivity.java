@@ -101,6 +101,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         recupererFichier();
 
         tracerCercle();
+        map.getOverlays().set(map.getOverlays().size()-1,myLocationNewOverlay); //Avoir la localisation par dessus les cercles
 
         bt_check.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -246,15 +247,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         miseEnPlaceMyLocationOverlay();
 
         miseEnPlaceKmlOverlay(overlays);
-
-        /**
-         * Ajout de marqueurs
-         * Ce sont des exemples, mais ca fonctionne
-         */
-        /*ajoutMarqueur(50.637687, 3.064494, "Beffroi");//Beffroi
-        ajoutMarqueur(50.605965, 3.137047, "Centrale");//Centrale
-        ajoutMarqueur(50.636895, 3.063444, "Grand'Place");//Grand'Place
-        ajoutMarqueur(50.605476, 3.139046, "4 Cantons");//4Cantons*/
     }
 
     /**
@@ -301,41 +293,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             }
         });
         map.getOverlays().add(myLocationNewOverlay);
-    }
-
-    public void ajoutMarqueur(double latitude, double longitude, String text) {
-
-        //création de plein de points jusqu'a 100k easy
-        points.add(new LabelledGeoPoint(latitude, longitude, text));
-        // wrap them in a theme
-        SimplePointTheme pt = new SimplePointTheme(points, true);
-
-        // create label style
-        Paint textStyle = new Paint();
-        textStyle.setStyle(Paint.Style.FILL);//Que l'intérieur du texte
-        textStyle.setColor(Color.parseColor("#0000ff"));//Bleu
-        textStyle.setTextAlign(Paint.Align.CENTER);
-        textStyle.setTextSize(20);
-
-        // set some visual options for the overlay
-        // we use here MAXIMUM_OPTIMIZATION algorithm, which works well with >100k points
-        SimpleFastPointOverlayOptions opt = SimpleFastPointOverlayOptions.getDefaultStyle()
-                .setAlgorithm(SimpleFastPointOverlayOptions.RenderingAlgorithm.MAXIMUM_OPTIMIZATION)
-                .setRadius(7).setIsClickable(true).setCellSize(15).setTextStyle(textStyle);
-
-        // create the overlay with the theme
-        final SimpleFastPointOverlay sfpo = new SimpleFastPointOverlay(pt, opt);
-
-        // onClick callback
-        sfpo.setOnClickListener(new SimpleFastPointOverlay.OnClickListener() {
-            @Override
-            public void onClick(SimpleFastPointOverlay.PointAdapter points, Integer point) {
-                Toast.makeText(map.getContext()
-                        , "You clicked " + ((LabelledGeoPoint) points.get(point)).getLabel()
-                        , Toast.LENGTH_SHORT).show();
-            }
-        });
-        map.getOverlays().add(sfpo);
     }
 
     public void onResume() {
