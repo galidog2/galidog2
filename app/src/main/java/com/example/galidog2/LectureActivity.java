@@ -86,7 +86,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private int nombreCercle = 0;//Cet entier permet de suivre l'avancée dans les cercles
     private Button bt_check;
     private List<GeoPoint> mGeoPoints;
-    private Polyline trajet;
     private Marker depart;
     private ArrayList<Marker> indications = new ArrayList<>();
 
@@ -351,7 +350,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                             toast.show();
                         }
                         else{
-                            toast.setText(indications.get(compteur).getTitle());
+                            toast.setText(indications.get(compteur).getSnippet());
                             toast.show();
                             compteur++;
                             displayedBefore = false;

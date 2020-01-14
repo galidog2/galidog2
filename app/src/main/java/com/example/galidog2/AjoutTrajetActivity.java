@@ -220,11 +220,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         }
     }
 
-    private void trouverAdresse(GeoPoint geoPoint) {
-        // Reverse Geocoding
-        GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
-        String theAddress;
-  
     /**
     * Fonction pour créer les cercles d'Eveil et de Validation
     */
@@ -623,3 +618,4 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         return false;
     }
 }
+
