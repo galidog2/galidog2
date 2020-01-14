@@ -3,6 +3,8 @@ package com.example.galidog2;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -11,8 +13,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import SyntheseVocale.VoiceIn;
+import SyntheseVocale.VoiceOut;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,23 +24,21 @@ public class MainActivity extends AppCompatActivity {
     Button speakButton;
 
     VoiceIn voice;
+    VoiceOut voiceOut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //ici vient une nlle branche carto
-        //ça n'a pas marché
 
         txtOutput = findViewById(R.id.text);
         speakButton = findViewById(R.id.speakButton);
 
+        voiceOut = new VoiceOut(getApplicationContext());
+
         speakButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getApplicationContext(),
-                        "click",
-                        Toast.LENGTH_SHORT).show();
                 startSpeechToText();
             }
         });
@@ -46,6 +48,12 @@ public class MainActivity extends AppCompatActivity {
     private void startSpeechToText() {
         voice = new VoiceIn(this);
         voice.listen();
+    }
+
+    private void createToast(String text){
+        Toast.makeText(getApplicationContext(),
+                text,
+                Toast.LENGTH_SHORT).show();
     }
 
 
@@ -65,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(),
                             voice.toString(),
                             Toast.LENGTH_SHORT).show();
+
+                    voiceOut.speak(voice.getPhrase());
                 }
                 break;
             }
