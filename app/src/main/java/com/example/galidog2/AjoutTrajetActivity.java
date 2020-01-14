@@ -54,6 +54,7 @@ import androidx.core.content.ContextCompat;
  */
 public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsReceiver {
 
+    private static final double rayon = 6371; // km
     /**
      * Attributs
      */
@@ -82,6 +83,10 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private Polyline polyline;
     KmlDocument kmlDocument = new KmlDocument();
     private static final String TAG = "AjoutTrajetActivity";
+
+    private ArrayList<Double> distanceSup = new ArrayList<>();//Nécessaire pour le calcul
+    private ArrayList<Double> distance = new ArrayList<>();//A enregistrer
+    private ArrayList<Double> information = new ArrayList<>();//A enregistrer
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +129,11 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             public void onClick(View v) {
                 //On trace le marqueur d'arrivée
                 tracerMarqueur("Arrivée");
+
+                //Calcul et entrée des infos sur les markers
+                ajoutInfoMarker();
+                Toast.makeText(AjoutTrajetActivity.this, "Marker 0 :" + listeMarqueurs.get(0).getSnippet() + listeMarqueurs.get(1).getSnippet(), Toast.LENGTH_SHORT).show();
+
                 //On enregistre polyline et marqueurs
                 enregistrerTrajet();
 
@@ -197,7 +207,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         map.getOverlays().add(cercle_validation);
         listCircleValidation.add(cercle_validation);
 
-        nombreCercle=nombreCercle+1;
+        nombreCercle = nombreCercle + 1;
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -309,6 +319,102 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     }
 
     /**
+     * Ajout de distance au marqueur
+     */
+
+    private void ajoutInfoMarker() {
+        construction();//On calcule les infos de distance et d'orientation
+        for (int i = 0; i < listeMarqueurs.size(); i++) {
+            if (i == 0 && listeMarqueurs.size() <= 2) { //Distance + prochaine orientation
+                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i)
+                        + " mètres");
+            } else if (i == 0) { //Distance + prochaine orientation
+                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i)
+                        + " mètres, puis tournez à " + information.get(i) + " heures");
+            } else if (i < listeMarqueurs.size() - 2) {
+                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1)
+                        + "heures, marchez sur " + distance.get(i)
+                        + " mètres, puis tournez à " + information.get(i) + " heures");
+            } else if (i == listeMarqueurs.size() - 2) {
+                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1)
+                        + "heures, marchez sur " + distance.get(i));
+            } else if (i == listeMarqueurs.size() - 1) {
+                listeMarqueurs.get(i).setSnippet("Arrivée");
+            }
+
+        }
+    }
+
+    /**
+     * Bouton (plus tard remplacé par une information vocale pour ordonner le calcul des informations
+     * Détermination de la distance entre les points (listes d'entier qui comprendra les distances, l'indice i sera la distance entre le point i et le point i+1)
+     * Détermination de l'information vers le point suivant (liste de string qui comprendra les informations horaires, ATTENTION il y aura besoin d'une liste des distance entre les points i et i+2 pour calculer les infos
+     */
+
+    private void construction() {
+        Log.i(TAG, "construction: test1: avant boucle for");
+        for (int i = 0; i < listeMarqueurs.size() - 1; i++) {
+            Log.i(TAG, "construction: test1 : dans boucle for");
+            if (i + 1 != listeMarqueurs.size()) {
+                distance.add(calculDistance(i, i + 1));
+            }
+            if (i + 2 != listeMarqueurs.size()) {
+                distanceSup.add(calculDistance(i, i + 2));
+                information.add(calculInformation(i));
+            }
+        }
+        Toast.makeText(this, "Construction réussie : " + distance.get(0), Toast.LENGTH_SHORT).show();//Marche pas ?
+    }
+
+    public double calculDistance(int i, int j) {
+        double latitudei = listeMarqueurs.get(i).getPosition().getLatitude();
+        double longitudei = listeMarqueurs.get(i).getPosition().getLongitude();
+        double latitudej = listeMarqueurs.get(j).getPosition().getLatitude();
+        double longitudej = listeMarqueurs.get(j).getPosition().getLongitude();
+        double x = (longitudej - longitudei) * Math.cos((latitudei + latitudej) / 2);
+        double y = (latitudej - latitudei);
+        double distance = Math.sqrt(x * x + y * y) * rayon;
+        if (distance == 0) {
+            return 0;
+        }
+        return Math.ceil(distance * 10);
+    }
+
+    public double calculInformation(int i) {
+        double d1 = calculDistance(i, i + 1);
+        double d2 = calculDistance(i + 1, i + 2);
+        double d3 = calculDistance(i, i + 2);
+
+        //Calcul de l'angle entre les 2 segments
+        double gamma = calculAngle(d1, d2, d3);
+
+        if (facteurDirection(i) > 0) {
+            return 6 - Math.floor(6 * gamma / Math.PI);
+        }
+        return 6 + Math.floor(6 * gamma / Math.PI);
+
+    }
+
+
+    //Fonction pour calculer l'angle entre 2 segments
+    public double calculAngle(double d1, double d2, double d3) {
+        return Math.acos((Math.pow(d1, 2) + Math.pow(d2, 2) - Math.pow(d3, 2)) / (2 * d1 * d2));
+    }
+
+    //Fonction pour calculer la pente
+    public double facteurDirection(int i) {
+        double latitudei = listeMarqueurs.get(i).getPosition().getLatitude();
+        double longitudei = listeMarqueurs.get(i).getPosition().getLongitude();
+        double latitudej = listeMarqueurs.get(i + 1).getPosition().getLatitude();
+        double longitudej = listeMarqueurs.get(i + 1).getPosition().getLongitude();
+        double latitudeh = listeMarqueurs.get(i + 2).getPosition().getLatitude();
+        double longitudeh = listeMarqueurs.get(i + 2).getPosition().getLongitude();
+
+        return (latitudej - latitudei) * (longitudeh - longitudei) - (longitudej - longitudei) * (latitudeh - latitudei);
+    }
+
+
+    /**
      * Trace un marqueur
      */
 
@@ -317,8 +423,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         marker.setPosition(dernierPoint);
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         marker.setIcon(getDrawable(R.drawable.marqueur));
-        marker.setSubDescription("Description possible");
-        marker.setSnippet("Adresse ?"); //TODO : Utiliser trouverAdresse() ici
+        marker.setSubDescription("Description possible");//TODO : Utiliser trouverAdresse() ici
         marker.setTitle(titre);
         listeMarqueurs.add(marker);
         map.getOverlays().add(marker);
@@ -409,12 +514,10 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private void enregistrerTrajet() {
         kmlDocument.mKmlRoot.addOverlay(polyline, kmlDocument);
         kmlDocument.mKmlRoot.addOverlays(listeMarqueurs, kmlDocument);
-//        kmlDocument.mKmlRoot.addOverlays(listCircleEveil, kmlDocument);
-//        kmlDocument.mKmlRoot.addOverlays(listCircleValidation, kmlDocument);
 
         File localFile = cheminStockage(nomFichier + ".kml");
         kmlDocument.saveAsKML(localFile);
-        Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
     }
 
     /**

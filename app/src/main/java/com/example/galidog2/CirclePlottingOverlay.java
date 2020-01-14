@@ -76,7 +76,7 @@ public class CirclePlottingOverlay extends Overlay {
 
 
     public void drawCircle(final MapView mapView, final int color){
-        List<GeoPoint> circle = Polygon.pointsAsCircle(pt, rayonm);
+        List<GeoPoint> circle = Polygon.pointsAsCircle(this.pt, rayonm);
         Polygon p = new Polygon(mapView);
         p.setPoints(circle);
         p.setFillColor(color);
