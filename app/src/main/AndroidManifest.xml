@@ -27,7 +27,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".TestNavigationActivity"></activity>
         <activity android:name=".AjoutTrajetActivity" />
         <activity android:name=".LectureActivity" />
         <activity android:name=".GenericActivity" />

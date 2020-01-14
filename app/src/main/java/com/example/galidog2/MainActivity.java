@@ -34,7 +34,7 @@ public class MainActivity extends GenericActivity {
 
         // On rend les boutons non cliquables (modes non pris en charge par Galidog2)
         findViewById(R.id.navigation).setEnabled(false);
-        /*findViewById(R.id.description).setEnabled(false);*/
+        findViewById(R.id.description).setEnabled(false);
 
 
         Button memorisationB = (Button)findViewById(R.id.mémorisation);
@@ -43,14 +43,6 @@ public class MainActivity extends GenericActivity {
             public void onClick(View v) {
 
                 Intent intent = new Intent(MainActivity.this, ChoixMemorisationActivity.class);
-                startActivity(intent);
-            }
-        });
-        Button descriptionB = (Button)findViewById(R.id.description);
-        descriptionB.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, TestNavigationActivity.class);
                 startActivity(intent);
             }
         });

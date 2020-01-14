@@ -2,6 +2,8 @@ package com.example.galidog2;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,14 +13,17 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -56,18 +61,27 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     private static final String TAG = "LectureActivity";
 
+    private Toast toast;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
+    private Location location;
+
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
+
     private String nomFichier;
     private FolderOverlay kmlOverlay;
     private List<GeoPoint> mGeoPoints;
-    private Location location;
     private Polyline trajet;
     private Marker depart;
+    private ArrayList<Marker> indications = new ArrayList<>();
+
+    private boolean displayedBefore = false;
     private boolean onGoing = false;
+    private int distanceEveilMeters = 10;
+    private int distanceTrajetMeters = 5;
+    private int compteur=0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -83,6 +97,12 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             nomFichier = getIntent().getStringExtra("nomfichier");
             Log.i("PMR",nomFichier);
         }
+
+        //initialisation du toast :
+        toast = Toast.makeText(getApplicationContext(),"",Toast.LENGTH_SHORT);
+
+        //vérification que la localisation a été activée :
+        checkIfLocalisation(this);
 
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
@@ -102,6 +122,9 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 if (marker.getTitle().equals("Départ")){
                     depart = marker;
                 }
+                else{
+                    indications.add(marker);
+                }
             }
         }
         mGeoPoints = trajet.getPoints();
@@ -120,9 +143,36 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     }
 
+    private void checkIfLocalisation(final Context context) {
+        LocationManager lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+
+        try {
+            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch(Exception ex) {}
+
+        try {
+            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch(Exception ex) {}
+
+        if(!gps_enabled && !network_enabled) {
+            // notify user
+            new AlertDialog.Builder(context)
+                    .setMessage("Veuillez activer la localisation pour démarrer le guidage.")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                            context.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("Annuler",null).show();
+        }
+    }
+
     private void setLocalisationManager(){
-        int minTime = 2000;
-        int minDistance = 2;
+        int minTime = 4000;
+        int minDistance = 4;
 
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -139,27 +189,64 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
             // Projection pour convertir la précision (reçue en mètres) en pixels.
             Projection projection = map.getProjection();
-            float accuracy = projection.metersToPixels(location.getAccuracy());
+            float accuracyMeters = location.getAccuracy();
+            float accuracyPixels = projection.metersToPixels(accuracyMeters);
+            float distanceTrajetPixels = projection.metersToPixels(distanceTrajetMeters);
+            float distanceEveilPixels = projection.metersToPixels(distanceEveilMeters);
 
             GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
 
+            if (accuracyMeters>distanceEveilMeters+distanceTrajetMeters){
+                toast.setText("Acquisition de la position en cours.");
+                toast.show();
+                return;
+            }
+
             if(!onGoing) {
-                if(trajet.isCloseTo(depart.getPosition(),accuracy, map)){
+                double distance = depart.getPosition().distanceToAsDouble(locationGeo);
+                if(distance<accuracyMeters){
                     onGoing = true;
-                    Toast.makeText(getApplicationContext(),"Vous êtes sur le point de départ. Démarrage du trajet", Toast.LENGTH_SHORT).show();
+                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet.");
+                    toast.show();
                 }
 
                 else{
-                    Toast.makeText(getApplicationContext(),"Placez vous sur le point de départ s'il vous plaît.", Toast.LENGTH_SHORT).show();
+                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
+                    toast.show();
                 }
             }
 
             else{
-                if(!trajet.isCloseTo(locationGeo,accuracy, map)){
-                    Toast.makeText(getApplicationContext(),"Revenez sur vos pas, vous vous éloignez du trajet.", Toast.LENGTH_SHORT).show();
+                if(!trajet.isCloseTo(locationGeo,accuracyPixels+distanceTrajetPixels, map)){
+                    toast.setText("Revenez sur vos pas, vous vous éloignez du trajet.");
+                    toast.show();
                 }
                 else{
-                    //Donner les indications...
+                    double distance = indications.get(compteur).getPosition().distanceToAsDouble(locationGeo);
+
+                    if (distance<accuracyMeters+distanceEveilMeters){
+                        if (indications.get(compteur).getTitle().equals("Arrivée")) {
+                            toast.setText("Vous arrivez dans 20m !");
+                            toast.show();
+                        }
+                        if (!displayedBefore){
+                            toast.setText("Éveil du " + indications.get(compteur).getTitle());
+                            toast.show();
+                            displayedBefore = true;
+                        }
+                    }
+                    if (distance<accuracyMeters+5){
+                        if (indications.get(compteur).getTitle().equals("Arrivée")) {
+                            toast.setText("Vous êtes arrivés !");
+                            toast.show();
+                        }
+                        else{
+                            toast.setText(indications.get(compteur).getTitle());
+                            toast.show();
+                            compteur++;
+                            displayedBefore = false;
+                        }
+                    }
                 }
             }
 
