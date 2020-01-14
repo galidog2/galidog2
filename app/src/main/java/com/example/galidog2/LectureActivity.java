@@ -2,21 +2,33 @@ package com.example.galidog2;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
@@ -27,6 +39,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
@@ -35,10 +48,6 @@ import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
-import org.osmdroid.views.overlay.simplefastpoint.LabelledGeoPoint;
-import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlay;
-import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlayOptions;
-import org.osmdroid.views.overlay.simplefastpoint.SimplePointTheme;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -48,7 +57,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-//TODO : gérer la navigation (se baser sur l'exemple OSMNavigator).
 
 /**
  * Activity générant la carte pour se diriger
@@ -57,23 +65,36 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     private static final String TAG = "LectureActivity";
 
+    private Toast toast;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
+    private Location location;
+
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
+
     private String nomFichier;
     private FolderOverlay kmlOverlay;
     private Polyline trajet;
     //Liste des points à marquer
     private List<IGeoPoint> points = new ArrayList<>(); //A supprimer avec AjoutMarqueurs
     private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
-    //TODO : récupérer la liste des markers dans KMLDocument !
 
     private ArrayList<CirclePlottingOverlay> listCircleEveil = new ArrayList<>();
     private ArrayList<CirclePlottingOverlay> listCircleValidation = new ArrayList<>();
     private int nombreCercle = 0;//Cet entier permet de suivre l'avancée dans les cercles
     private Button bt_check;
+    private List<GeoPoint> mGeoPoints;
+    private Polyline trajet;
+    private Marker depart;
+    private ArrayList<Marker> indications = new ArrayList<>();
+
+    private boolean displayedBefore = false;
+    private boolean onGoing = false;
+    private int distanceEveilMeters = 10;
+    private int distanceTrajetMeters = 5;
+    private int compteur=0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -85,15 +106,50 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
         //récupération du nom du trajet :
-        if (getIntent().hasExtra("nomfichier")) {
+        if (getIntent().hasExtra("nomfichier")){
             nomFichier = getIntent().getStringExtra("nomfichier");
-            Log.i("PMR", nomFichier);
+            Log.i("PMR",nomFichier);
         }
+
+        //initialisation du toast :
+        toast = Toast.makeText(getApplicationContext(),"",Toast.LENGTH_SHORT);
+
+        //vérification que la localisation a été activée :
+        checkIfLocalisation(this);
 
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         bt_check = findViewById(R.id.bt_check);
+        switchMyLocation.setChecked(true);
+      
         miseEnPlaceCarte();
+
+        List<Overlay> overlays = kmlOverlay.getItems();
+        trajet = new Polyline();
+        int i;
+        for (i= 0 ; i<overlays.size(); i++)
+        {
+            if(overlays.get(i) instanceof Polyline){
+                trajet = (Polyline)overlays.get(i);
+            }
+            if (overlays.get(i) instanceof Marker){
+                Marker marker = (Marker)overlays.get(i);
+                if (marker.getTitle().equals("Départ")){
+                    depart = marker;
+                }
+                else{
+                    indications.add(marker);
+                }
+            }
+        }
+        mGeoPoints = trajet.getPoints();
+        map.post(new Runnable() {
+            @Override
+            public void run() {
+                final BoundingBox boundingBox = BoundingBox.fromGeoPoints(mGeoPoints);
+                map.zoomToBoundingBox(boundingBox, false, 30);
+            }
+        });
 
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
         map.getOverlays().add(0, mapEventsOverlay);
@@ -101,7 +157,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         recupererFichier();
 
         tracerCercle();
-        map.getOverlays().set(map.getOverlays().size()-1,myLocationNewOverlay); //Avoir la localisation par dessus les cercles
+        map.getOverlays().set(map.getOverlays().size()-1,myLocationNewOverlay); //Localisation par dessus les cercles
 
         bt_check.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -112,6 +168,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 }
             }
         });
+        setLocalisationManager();
     }
 
     /**
@@ -137,12 +194,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 listeMarqueurs.add(marker);
             }
         }
-    }
-
-    /**
-     * Fonction utilisée lorsque le mal-voyant refait seul la route
-     */
-    private void navigation() {
     }
 
     /**
@@ -199,7 +250,133 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 nombreCercle += 1;
             }
         }
+
     }
+
+    private void checkIfLocalisation(final Context context) {
+        LocationManager lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+
+        try {
+            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch(Exception ex) {}
+
+        try {
+            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch(Exception ex) {}
+
+        if(!gps_enabled && !network_enabled) {
+            // notify user
+            new AlertDialog.Builder(context)
+                    .setMessage("Veuillez activer la localisation pour démarrer le guidage.")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                            context.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("Annuler",null).show();
+        }
+    }
+
+    private void setLocalisationManager(){
+        int minTime = 4000;
+        int minDistance = 4;
+
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        //Nécessaire pour pas d'erreur mais degueulasse !
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
+    }
+
+    LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(android.location.Location location) {
+
+            // Projection pour convertir la précision (reçue en mètres) en pixels.
+            Projection projection = map.getProjection();
+            float accuracyMeters = location.getAccuracy();
+            float accuracyPixels = projection.metersToPixels(accuracyMeters);
+            float distanceTrajetPixels = projection.metersToPixels(distanceTrajetMeters);
+            float distanceEveilPixels = projection.metersToPixels(distanceEveilMeters);
+
+            GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
+
+            if (accuracyMeters>distanceEveilMeters+distanceTrajetMeters){
+                toast.setText("Acquisition de la position en cours.");
+                toast.show();
+                return;
+            }
+
+            if(!onGoing) {
+                double distance = depart.getPosition().distanceToAsDouble(locationGeo);
+                if(distance<accuracyMeters){
+                    onGoing = true;
+                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet.");
+                    toast.show();
+                }
+
+                else{
+                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
+                    toast.show();
+                }
+            }
+
+            else{
+                if(!trajet.isCloseTo(locationGeo,accuracyPixels+distanceTrajetPixels, map)){
+                    toast.setText("Revenez sur vos pas, vous vous éloignez du trajet.");
+                    toast.show();
+                }
+                else{
+                    double distance = indications.get(compteur).getPosition().distanceToAsDouble(locationGeo);
+
+                    if (distance<accuracyMeters+distanceEveilMeters){
+                        if (indications.get(compteur).getTitle().equals("Arrivée")) {
+                            toast.setText("Vous arrivez dans 20m !");
+                            toast.show();
+                        }
+                        if (!displayedBefore){
+                            toast.setText("Éveil du " + indications.get(compteur).getTitle());
+                            toast.show();
+                            displayedBefore = true;
+                        }
+                    }
+                    if (distance<accuracyMeters+5){
+                        if (indications.get(compteur).getTitle().equals("Arrivée")) {
+                            toast.setText("Vous êtes arrivés !");
+                            toast.show();
+                        }
+                        else{
+                            toast.setText(indications.get(compteur).getTitle());
+                            toast.show();
+                            compteur++;
+                            displayedBefore = false;
+                        }
+                    }
+                }
+            }
+
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
 
     private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
@@ -231,10 +408,12 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
             }
         }
+
     }
 
+
     /**
-     * Mise en place de la carte
+     * Mise en place de la carte du monde
      */
     private void miseEnPlaceCarte() {
         map = (MapView) findViewById(R.id.map);
@@ -251,22 +430,16 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     /**
      * Méthode pour afficher un trajet
-     *
      * @param overlays la liste des overlays
      */
     private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
         KmlDocument kmlToRead = new KmlDocument();
-        String path = Environment.getExternalStorageDirectory().toString() + "/osmdroid/kml/" + nomFichier + ".kml";
+        String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml/"+nomFichier+".kml";
         File fichier = new File(path);
         kmlToRead.parseKMLFile(fichier);
         kmlOverlay = (FolderOverlay) kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
         overlays.add(kmlOverlay);
         map.invalidate();
-
-        IMapController mapController = map.getController();
-        mapController.setZoom((double) 15); //valeur à adapter en fonction de l'itinéraire
-        BoundingBox bb = kmlToRead.mKmlRoot.getBoundingBox();
-        mapController.setCenter(bb.getCenter());
     }
 
     /**

@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -18,10 +19,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import org.osmdroid.config.Configuration;
+
 public class MainActivity extends GenericActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(this));
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -42,6 +46,7 @@ public class MainActivity extends GenericActivity {
                 startActivity(intent);
             }
         });
+
     }
 
     @Override
