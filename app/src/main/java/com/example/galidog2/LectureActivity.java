@@ -202,7 +202,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 return;
             }
 
-            //TODO : FIX on ne dépasse pas la première indication
             if(!onGoing) {
                 double distance = depart.getPosition().distanceToAsDouble(locationGeo);
                 if(distance<accuracyMeters){
@@ -224,6 +223,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 }
                 else{
                     double distance = indications.get(compteur).getPosition().distanceToAsDouble(locationGeo);
+
                     if (distance<accuracyMeters+distanceEveilMeters){
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
                             toast.setText("Vous arrivez dans 20m !");
@@ -235,13 +235,13 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                             displayedBefore = true;
                         }
                     }
-                    else if (distance<accuracyMeters){
+                    if (distance<accuracyMeters+5){
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
                             toast.setText("Vous êtes arrivés !");
                             toast.show();
                         }
                         else{
-                            toast.setText("Indication : ");
+                            toast.setText(indications.get(compteur).getTitle());
                             toast.show();
                             compteur++;
                             displayedBefore = false;
