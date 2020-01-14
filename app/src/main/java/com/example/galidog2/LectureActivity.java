@@ -240,7 +240,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                 Information.add(calculInformation(i));
             }
         }
-        Test.setText("Les distances sont " + "\n" + Distance.get(0) + "\n" + Distance.get(1) + "\n" + DistanceSup.get(0) + "\n" + Information.get(0));
+        //Test.setText("Les distances sont " + "\n" + Distance.get(0) + "\n" + Distance.get(1) + "\n" + DistanceSup.get(0) + "\n" + Information.get(0));
     }
 
 
