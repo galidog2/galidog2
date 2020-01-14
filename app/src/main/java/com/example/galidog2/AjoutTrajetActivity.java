@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -47,6 +48,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 /**
  * Activité qui permet l'enregistrement d'un nouveau trajet
@@ -382,29 +385,23 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
      * La localisation doit etre activée dans les paramètres ...
      */
     private void AlertDialogDemarrer() {
+        final LayoutInflater layoutInflater = LayoutInflater.from(this);
+        View promptView = layoutInflater.inflate(R.layout.prompt, null);
 
-        // Un AlertDialog fonctionne comme une «mini-activité».
-        // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setMessage("Appuyez sur 'Démarrer' lorsque vous êtes prêt");
-        // Cet AlertDialog comporte un bouton pour démarrer…
-        alertDialogBuilder.setPositiveButton("Démarrer", new DialogInterface.OnClickListener() {
+        final AlertDialog alertD = new AlertDialog.Builder(this).create();
+
+        FloatingActionButton btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
+
+        btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface arg0, int arg1) {
-                //On attend, le temps que la localisation se fasse et que l'utilisateur soit prêt
+            public void onClick(View view) {
+                alertD.dismiss();
             }
         });
-        // … et un bouton pour annuler, qui arrête l'AlertDialog.
-        alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(AjoutTrajetActivity.this, ChoixMemorisationActivity.class);
-                //On retourne au choix des activités si on annule.
-                startActivity(intent);
-            }
-        });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
+
+        alertD.setView(promptView);
+
+        alertD.show();
     }
 
     @Override

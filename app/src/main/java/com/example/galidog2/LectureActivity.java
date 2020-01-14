@@ -79,7 +79,8 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     private boolean displayedBefore = false;
     private boolean onGoing = false;
-    private int distanceEveilMeter = 20;
+    private int distanceEveilMeters = 10;
+    private int distanceTrajetMeters = 5;
     private int compteur=0;
 
     @Override
@@ -190,11 +191,12 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             Projection projection = map.getProjection();
             float accuracyMeters = location.getAccuracy();
             float accuracyPixels = projection.metersToPixels(accuracyMeters);
-            float distanceEveilPixel = projection.metersToPixels(distanceEveilMeter);
+            float distanceTrajetPixels = projection.metersToPixels(distanceTrajetMeters);
+            float distanceEveilPixels = projection.metersToPixels(distanceEveilMeters);
 
             GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
 
-            if (accuracyMeters>distanceEveilMeter){
+            if (accuracyMeters>distanceEveilMeters+distanceTrajetMeters){
                 toast.setText("Acquisition de la position en cours.");
                 toast.show();
                 return;
@@ -216,13 +218,13 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             }
 
             else{
-                if(!trajet.isCloseTo(locationGeo,accuracyPixels, map)){
+                if(!trajet.isCloseTo(locationGeo,accuracyPixels+distanceTrajetPixels, map)){
                     toast.setText("Revenez sur vos pas, vous vous éloignez du trajet.");
                     toast.show();
                 }
                 else{
                     double distance = indications.get(compteur).getPosition().distanceToAsDouble(locationGeo);
-                    if (distance<accuracyMeters+distanceEveilPixel){
+                    if (distance<accuracyMeters+distanceEveilMeters){
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
                             toast.setText("Vous arrivez dans 20m !");
                             toast.show();
