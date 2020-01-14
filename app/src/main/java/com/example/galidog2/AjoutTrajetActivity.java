@@ -1,13 +1,16 @@
 package com.example.galidog2;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -56,10 +59,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
  */
 public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsReceiver {
 
+    private static final double rayon = 6371; // km
+    /**
+     * Attributs
+     */
     private CheckBox bouton_pause;
     private Button bouton_arret;
-    private Button bouton_marker;
-    private int numero_marker = 1;
+    private Button bouton_cercle;//Bouton pour dessiner un cercle
+    //    private int numero_marker = 1;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
     private Switch switchMyLocation; // permet d'activer ou de désactiver l'affichage de la position
@@ -69,11 +76,22 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private GeoPoint dernierPoint;
     private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
 
-    private String MY_USERAGENT = "com.beview.mygeoapp";
+    private String MY_USERAGENT = "Galidog2";
+    private Address adresse;
+    private String st_adresse;
+    private List<Address> listeAdresses = null;
+
+    private ArrayList<CirclePlottingOverlay> listCircleEveil = new ArrayList<>();
+    private ArrayList<CirclePlottingOverlay> listCircleValidation = new ArrayList<>();
+    private int nombreCercle = 0;//Cet entier permet de suivre l'avancée dans les cercles
 
     private Polyline polyline;
     KmlDocument kmlDocument = new KmlDocument();
     private static final String TAG = "AjoutTrajetActivity";
+
+    private ArrayList<Double> distanceSup = new ArrayList<>();//Nécessaire pour le calcul
+    private ArrayList<Double> distance = new ArrayList<>();//A enregistrer
+    private ArrayList<Double> information = new ArrayList<>();//A enregistrer
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +114,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         bouton_pause = findViewById(R.id.cb_pause);
         bouton_arret = findViewById(R.id.bt_arret);
-        bouton_marker = findViewById(R.id.bt_marker);
+        bouton_cercle = findViewById(R.id.bt_cercle);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         miseEnPlaceCarte();
 
@@ -119,6 +137,11 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             public void onClick(View v) {
                 //On trace le marqueur d'arrivée
                 tracerMarqueur("Arrivée");
+
+                //Calcul et entrée des infos sur les markers
+                ajoutInfoMarker();
+                Toast.makeText(AjoutTrajetActivity.this, "Marker 0 :" + listeMarqueurs.get(0).getSnippet() + listeMarqueurs.get(1).getSnippet(), Toast.LENGTH_SHORT).show();
+
                 //On enregistre polyline et marqueurs
                 enregistrerTrajet();
 
@@ -127,16 +150,12 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             }
         });
 
-        bouton_marker.setOnClickListener(new View.OnClickListener() {
+        bouton_cercle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //On trace le marqueur
-                tracerMarqueur("Point " + numero_marker);
-                numero_marker = numero_marker + 1;
-
-                // Trouver l'adresse du marker pour le mettre en description de marker
-                // EDIT: on ne l'utilise pas tant qu'on n'a pas résolu le problème
-                //trouverAdresse(dernierPoint);
+                createCircle(dernierPoint);
+                tracerMarqueur("Point n°: " + nombreCercle);
+//                trouverAdresse(dernierPoint); //Trouver l'adresse du marker pour le mettre en description de marker
             }
         });
     }
@@ -148,7 +167,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
                 dernierPoint = new GeoPoint(latitude, longitude);
-//                GeoPoint geoPoint = new GeoPoint(latitude, longitude);
 
                 polyline.addPoint(dernierPoint);
                 map.getOverlays().add(polyline);
@@ -206,50 +224,241 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         // Reverse Geocoding
         GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
         String theAddress;
+  
+    /**
+    * Fonction pour créer les cercles d'Eveil et de Validation
+    */
 
-        try {
-            List<Address> addresses = geocoder.getFromLocation(geoPoint.getLatitude(), geoPoint.getLongitude(), 1);
-            StringBuilder sb = new StringBuilder();
-            if (addresses.size() > 0) {
-                Address address = addresses.get(0);
-                int n = address.getMaxAddressLineIndex();
-                Log.d("Test", "CountryName: " + address.getCountryName());
-                Log.d("Test", "CountryCode: " + address.getCountryCode());
-                Log.d("Test", "PostalCode " + address.getPostalCode());
+    private void createCircle(GeoPoint geoPoint) {
+        //Cercle d'Eveil
+        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, nombreCercle);
+        cercle_eveil.drawCircle(map, Color.RED);
+        listCircleEveil.add(cercle_eveil);
+        map.getOverlays().add(cercle_eveil);
+
+        //Cercle de Validation
+        CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(geoPoint, 3, nombreCercle);
+        cercle_validation.drawCircle(map, Color.RED);
+        map.getOverlays().add(cercle_validation);
+        listCircleValidation.add(cercle_validation);
+
+        nombreCercle = nombreCercle + 1;
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private void trouverAdresse(GeoPoint geoPoint) {
+        // Retreive Geocoding data (add this code to an event click listener on a button)
+        new AsyncTask<String, Void, List<Address>>() {
+            @Override
+            protected List<Address> doInBackground(String... strings) {
+//                 Reverse Geocoding
+                GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
+
+                try {
+                    listeAdresses = geocoder.getFromLocation(50.605965, 3.137047, 1);
+                    adresse = listeAdresses.get(0);
+
+                    StringBuilder sb = new StringBuilder();
+                    if (listeAdresses.size() > 0) {
+                        Address address = listeAdresses.get(0);
+                        int n = address.getMaxAddressLineIndex();
+                        Log.d("Test", "CountryName: " + address.getCountryName());
+                        Log.d("Test", "CountryCode: " + address.getCountryCode());
+                        Log.d("Test", "PostalCode " + address.getPostalCode());
 //                        Log.d("Test", "FeatureName " + address.getFeatureName()); //null
-                Log.d("Test", "City: " + address.getAdminArea());
-                Log.d("Test", "Locality: " + address.getLocality());
-                Log.d("Test", "Premises: " + address.getPremises()); //null
-                Log.d("Test", "SubAdminArea: " + address.getSubAdminArea());
-                Log.d("Test", "SubLocality: " + address.getSubLocality());
+                        Log.d("Test", "City: " + address.getAdminArea());
+                        Log.d("Test", "Locality: " + address.getLocality());
+                        Log.d("Test", "Premises: " + address.getPremises()); //null
+                        Log.d("Test", "SubAdminArea: " + address.getSubAdminArea());
+                        Log.d("Test", "SubLocality: " + address.getSubLocality());
 //                        Log.d("Test", "SubThoroughfare: " + address.getSubThoroughfare()); //null
 //                        Log.d("Test", "getThoroughfare: " + address.getThoroughfare()); //null
-                Log.d("Test", "Locale: " + address.getLocale());
-                for (int i = 0; i <= n; i++) {
-                    if (i != 0)
-                        sb.append(", ");
-                    sb.append(address.getAddressLine(i));
+                        Log.d("Test", "Locale: " + address.getLocale());
+                        for (int i = 0; i <= n; i++) {
+                            if (i != 0)
+                                sb.append(", ");
+                            sb.append(address.getAddressLine(i));
+                        }
+                        st_adresse = sb.toString();
+                        Toast.makeText(AjoutTrajetActivity.this, "Adresse : " + st_adresse, Toast.LENGTH_SHORT).show();
+                    } else {
+                        adresse = null;
+                        Toast.makeText(AjoutTrajetActivity.this, "Echec ...", Toast.LENGTH_SHORT).show();
+                    }
+                    return listeAdresses;
+                } catch (IOException e) {
+                    adresse = null;
                 }
-                theAddress = sb.toString();
-            } else {
-                theAddress = null;
+                if (adresse != null) {
+                    Log.d("Test", "Adresse: " + st_adresse);
+                }
+                return null;
             }
-            Toast.makeText(this, theAddress, Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            theAddress = null;
-        }
-        if (theAddress != null) {
-            Log.d("Test", "Address: " + theAddress);
+//            @Override
+//            protected List<Address> doInBackground(String... strings) {
+//                GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
+//                try {
+//                    listeAdresses = geocoder.getFromLocation(startPoint.getLatitude(),startPoint.getLongitude(), 1);
+//                    Toast.makeText(AjoutTrajetActivity.this, "Adresse : "+listeAdresses.get(0), Toast.LENGTH_SHORT).show();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    Toast.makeText(AjoutTrajetActivity.this, "Geocoding error! Internet available?", Toast.LENGTH_SHORT).show();
+//                }
+//                return listeAdresses;
+//            }
+
+//            @Override
+//            protected Void doInBackground(Void... voids) {
+//                // Reverse Geocoding
+//                GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
+//
+//                try {
+//                    List<Address> addresses = geocoder.getFromLocation(startPoint.getLatitude(), startPoint.getLongitude(), 1);
+//
+//                    adresse = addresses.get(0);
+////                    StringBuilder sb = new StringBuilder();
+////                    if (addresses.size() > 0) {
+////                        Address address = addresses.get(0);
+////                        int n = address.getMaxAddressLineIndex();
+////                        Log.d("Test", "CountryName: " + address.getCountryName());
+////                        Log.d("Test", "CountryCode: " + address.getCountryCode());
+////                        Log.d("Test", "PostalCode " + address.getPostalCode());
+//////                        Log.d("Test", "FeatureName " + address.getFeatureName()); //null
+////                        Log.d("Test", "City: " + address.getAdminArea());
+////                        Log.d("Test", "Locality: " + address.getLocality());
+////                        Log.d("Test", "Premises: " + address.getPremises()); //null
+////                        Log.d("Test", "SubAdminArea: " + address.getSubAdminArea());
+////                        Log.d("Test", "SubLocality: " + address.getSubLocality());
+//////                        Log.d("Test", "SubThoroughfare: " + address.getSubThoroughfare()); //null
+//////                        Log.d("Test", "getThoroughfare: " + address.getThoroughfare()); //null
+////                        Log.d("Test", "Locale: " + address.getLocale());
+////                        for (int i = 0; i <= n; i++) {
+////                            if (i != 0)
+////                                sb.append(", ");
+////                            sb.append(address.getAddressLine(i));
+////                        }
+////                        adresse = sb.toString();
+////                    } else {
+////                        adresse = null;
+////                    }
+//                    Toast.makeText(AjoutTrajetActivity.this, "Adresse : " + adresse, Toast.LENGTH_SHORT).show();
+//                } catch (IOException e) {
+//                    adresse = null;
+//                }
+//                if (adresse != null) {
+//                    Log.d("Test", "Adresse: " + adresse);
+//                }
+//                return null;
+//            }
+        }.execute();
+    }
+
+    /**
+     * Ajout de distance au marqueur
+     */
+
+    private void ajoutInfoMarker() {
+        construction();//On calcule les infos de distance et d'orientation
+        for (int i = 0; i < listeMarqueurs.size(); i++) {
+            if (i == 0 && listeMarqueurs.size() <= 2) { //Distance + prochaine orientation
+                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i)
+                        + " mètres");
+            } else if (i == 0) { //Distance + prochaine orientation
+                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i)
+                        + " mètres, puis tournez à " + information.get(i) + " heures");
+            } else if (i < listeMarqueurs.size() - 2) {
+                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1)
+                        + "heures, marchez sur " + distance.get(i)
+                        + " mètres, puis tournez à " + information.get(i) + " heures");
+            } else if (i == listeMarqueurs.size() - 2) {
+                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1)
+                        + "heures, marchez sur " + distance.get(i));
+            } else if (i == listeMarqueurs.size() - 1) {
+                listeMarqueurs.get(i).setSnippet("Arrivée");
+            }
+
         }
     }
+
+    /**
+     * Bouton (plus tard remplacé par une information vocale pour ordonner le calcul des informations
+     * Détermination de la distance entre les points (listes d'entier qui comprendra les distances, l'indice i sera la distance entre le point i et le point i+1)
+     * Détermination de l'information vers le point suivant (liste de string qui comprendra les informations horaires, ATTENTION il y aura besoin d'une liste des distance entre les points i et i+2 pour calculer les infos
+     */
+
+    private void construction() {
+        Log.i(TAG, "construction: test1: avant boucle for");
+        for (int i = 0; i < listeMarqueurs.size() - 1; i++) {
+            Log.i(TAG, "construction: test1 : dans boucle for");
+            if (i + 1 != listeMarqueurs.size()) {
+                distance.add(calculDistance(i, i + 1));
+            }
+            if (i + 2 != listeMarqueurs.size()) {
+                distanceSup.add(calculDistance(i, i + 2));
+                information.add(calculInformation(i));
+            }
+        }
+        Toast.makeText(this, "Construction réussie : " + distance.get(0), Toast.LENGTH_SHORT).show();//Marche pas ?
+    }
+
+    public double calculDistance(int i, int j) {
+        double latitudei = listeMarqueurs.get(i).getPosition().getLatitude();
+        double longitudei = listeMarqueurs.get(i).getPosition().getLongitude();
+        double latitudej = listeMarqueurs.get(j).getPosition().getLatitude();
+        double longitudej = listeMarqueurs.get(j).getPosition().getLongitude();
+        double x = (longitudej - longitudei) * Math.cos((latitudei + latitudej) / 2);
+        double y = (latitudej - latitudei);
+        double distance = Math.sqrt(x * x + y * y) * rayon;
+        if (distance == 0) {
+            return 0;
+        }
+        return Math.ceil(distance * 10);
+    }
+
+    public double calculInformation(int i) {
+        double d1 = calculDistance(i, i + 1);
+        double d2 = calculDistance(i + 1, i + 2);
+        double d3 = calculDistance(i, i + 2);
+
+        //Calcul de l'angle entre les 2 segments
+        double gamma = calculAngle(d1, d2, d3);
+
+        if (facteurDirection(i) > 0) {
+            return 6 - Math.floor(6 * gamma / Math.PI);
+        }
+        return 6 + Math.floor(6 * gamma / Math.PI);
+
+    }
+
+
+    //Fonction pour calculer l'angle entre 2 segments
+    public double calculAngle(double d1, double d2, double d3) {
+        return Math.acos((Math.pow(d1, 2) + Math.pow(d2, 2) - Math.pow(d3, 2)) / (2 * d1 * d2));
+    }
+
+    //Fonction pour calculer la pente
+    public double facteurDirection(int i) {
+        double latitudei = listeMarqueurs.get(i).getPosition().getLatitude();
+        double longitudei = listeMarqueurs.get(i).getPosition().getLongitude();
+        double latitudej = listeMarqueurs.get(i + 1).getPosition().getLatitude();
+        double longitudej = listeMarqueurs.get(i + 1).getPosition().getLongitude();
+        double latitudeh = listeMarqueurs.get(i + 2).getPosition().getLatitude();
+        double longitudeh = listeMarqueurs.get(i + 2).getPosition().getLongitude();
+
+        return (latitudej - latitudei) * (longitudeh - longitudei) - (longitudej - longitudei) * (latitudeh - latitudei);
+    }
+
+
+    /**
+     * Trace un marqueur
+     */
 
     private void tracerMarqueur(String titre) {
         Marker marker = new Marker(map);
         marker.setPosition(dernierPoint);
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         marker.setIcon(getDrawable(R.drawable.marqueur));
-        marker.setSubDescription("Description possible");
-        marker.setSnippet("Adresse ?");
+        marker.setSubDescription("Description possible");//TODO : Utiliser trouverAdresse() ici
         marker.setTitle(titre);
         listeMarqueurs.add(marker);
         map.getOverlays().add(marker);
@@ -341,7 +550,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         File localFile = cheminStockage(nomFichier + ".kml");
         kmlDocument.saveAsKML(localFile);
-        Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
     }
 
     /**
