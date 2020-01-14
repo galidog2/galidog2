@@ -8,12 +8,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -31,7 +29,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import org.osmdroid.api.IGeoPoint;
-import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
@@ -53,10 +50,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 
 /**
  * Activity générant la carte pour se diriger
@@ -77,8 +70,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private String nomFichier;
     private FolderOverlay kmlOverlay;
     private Polyline trajet;
-    //Liste des points à marquer
-    private List<IGeoPoint> points = new ArrayList<>(); //A supprimer avec AjoutMarqueurs
     private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
 
     private ArrayList<CirclePlottingOverlay> listCircleEveil = new ArrayList<>();
@@ -220,11 +211,13 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     //Fonction pour changer la couleur du cercle d'Eveil
     private void ModifColorEveil(int n) {
         listCircleEveil.get(n).changeColor(map, Color.GREEN);
+        map.getOverlays().set(map.getOverlays().size()-1,myLocationNewOverlay);
     }
 
     //Fonction pour changer la couleur du cercle de validation
     private void ModifColorValidation(int n) {
         listCircleValidation.get(n).changeColor(map, Color.GREEN);
+        map.getOverlays().set(map.getOverlays().size()-1,myLocationNewOverlay);
     }
 
     //On check si on est dans le cercle d'éveil du point numéro n
@@ -343,6 +336,10 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                             toast.show();
                             displayedBefore = true;
                         }
+
+                        if (nombreCercle < listCircleValidation.size()) {
+                            CheckCircleEveil(myLocationNewOverlay.getMyLocation(), nombreCercle);
+                        }
                     }
                     if (distance<accuracyMeters+5){
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
@@ -354,6 +351,11 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
                             toast.show();
                             compteur++;
                             displayedBefore = false;
+                        }
+
+                        if (nombreCercle < listCircleValidation.size()) {
+                            CheckCircleEveil(myLocationNewOverlay.getMyLocation(), nombreCercle);
+                            CheckCircleValidation(myLocationNewOverlay.getMyLocation(), nombreCercle);
                         }
                     }
                 }

@@ -90,8 +90,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     private static final String TAG = "AjoutTrajetActivity";
 
     private ArrayList<Double> distanceSup = new ArrayList<>();//Nécessaire pour le calcul
-    private ArrayList<Double> distance = new ArrayList<>();//A enregistrer
-    private ArrayList<Double> information = new ArrayList<>();//A enregistrer
+    private ArrayList<Double> distance = new ArrayList<>();
+    private ArrayList<Double> information = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,7 +140,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
                 //Calcul et entrée des infos sur les markers
                 ajoutInfoMarker();
-                Toast.makeText(AjoutTrajetActivity.this, "Marker 0 :" + listeMarqueurs.get(0).getSnippet() + listeMarqueurs.get(1).getSnippet(), Toast.LENGTH_SHORT).show();
 
                 //On enregistre polyline et marqueurs
                 enregistrerTrajet();
@@ -545,7 +544,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         File localFile = cheminStockage(nomFichier + ".kml");
         kmlDocument.saveAsKML(localFile);
-//        Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
+        Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
     }
 
     /**
