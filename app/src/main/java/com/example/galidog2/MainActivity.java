@@ -1,87 +1,70 @@
 package com.example.galidog2;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.speech.RecognizerIntent;
-import android.speech.tts.TextToSpeech;
-import android.util.Log;
+import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import org.osmdroid.config.Configuration;
 
-import java.util.ArrayList;
-import java.util.Locale;
-
-import SyntheseVocale.VoiceIn;
-import SyntheseVocale.VoiceOut;
-
-public class MainActivity extends AppCompatActivity {
-
-    TextView txtOutput;
-    Button speakButton;
-
-    VoiceIn voice;
-    VoiceOut voiceOut;
+public class MainActivity extends GenericActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(this));
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        txtOutput = findViewById(R.id.text);
-        speakButton = findViewById(R.id.speakButton);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(myToolbar);
 
-        voiceOut = new VoiceOut(getApplicationContext());
+        // On rend les boutons non cliquables (modes non pris en charge par Galidog2)
+        findViewById(R.id.navigation).setEnabled(false);
+        findViewById(R.id.description).setEnabled(false);
 
-        speakButton.setOnClickListener(new View.OnClickListener() {
+
+        Button memorisationB = (Button)findViewById(R.id.mémorisation);
+        memorisationB.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                startSpeechToText();
+            public void onClick(View v) {
+
+                Intent intent = new Intent(MainActivity.this, ChoixMemorisationActivity.class);
+                startActivity(intent);
             }
         });
+
     }
 
-
-    private void startSpeechToText() {
-        voice = new VoiceIn(this);
-        voice.listen();
-    }
-
-    private void createToast(String text){
-        Toast.makeText(getApplicationContext(),
-                text,
-                Toast.LENGTH_SHORT).show();
-    }
-
-
-    /**
-     * Callback for speech recognition activity
-     */
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case 666: {
-                if (resultCode == RESULT_OK && null != data) {
-                    ArrayList<String> result = data
-                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                    String phrase = result.get(0);
-                    voice.interpreterAction(phrase);
-                    Toast.makeText(getApplicationContext(),
-                            voice.toString(),
-                            Toast.LENGTH_SHORT).show();
-
-                    voiceOut.speak(voice.getPhrase());
-                }
-                break;
-            }
-        }
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.appbar, menu);
+        return true;
     }
 
 
-
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        audioModeStart();
+        SharedPreferences sharedpreferences = getSharedPreferences("Mode",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putString("audio", "true");
+        editor.apply();
+        return true;
+    }
 
 }
