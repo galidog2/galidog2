@@ -162,17 +162,21 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(android.location.Location location) {
-            if (!bouton_pause.isChecked()) {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                dernierPoint = new GeoPoint(latitude, longitude);
+            if(location.getAccuracy()>15){
+                Toast.makeText(AjoutTrajetActivity.this, "Acquisition de la position en cours", Toast.LENGTH_SHORT).show();
+            }else{
+                if (!bouton_pause.isChecked()) {
+                    double latitude = location.getLatitude();
+                    double longitude = location.getLongitude();
+                    dernierPoint = new GeoPoint(latitude, longitude);
 
-                polyline.addPoint(dernierPoint);
-                map.getOverlays().add(polyline);
-                map.getController().animateTo(dernierPoint);
+                    polyline.addPoint(dernierPoint);
+                    map.getOverlays().add(polyline);
+                    map.getController().animateTo(dernierPoint);
 
-                if (polyline.getPoints().size() == 1) {
-                    tracerMarqueur("Départ");
+                    if (polyline.getPoints().size() == 1) {
+                        tracerMarqueur("Départ");
+                    }
                 }
             }
         }
@@ -588,23 +592,41 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
      * La localisation doit etre activée dans les paramètres ...
      */
     private void AlertDialogDemarrer() {
-        final LayoutInflater layoutInflater = LayoutInflater.from(this);
-        View promptView = layoutInflater.inflate(R.layout.prompt, null);
 
-        final AlertDialog alertD = new AlertDialog.Builder(this).create();
-
-        FloatingActionButton btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
-
-        btnPlay.setOnClickListener(new View.OnClickListener() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Appuyez sur 'Démarrer' lorsque vous êtes prêt");
+        alertDialogBuilder.setPositiveButton("Démarrer", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                alertD.dismiss();
+            public void onClick(DialogInterface arg0, int arg1) {
             }
         });
+        alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(AjoutTrajetActivity.this, ChoixMemorisationActivity.class);
+                startActivity(intent);
+            }
+        });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
 
-        alertD.setView(promptView);
-
-        alertD.show();
+//        final LayoutInflater layoutInflater = LayoutInflater.from(this);
+//        View promptView = layoutInflater.inflate(R.layout.prompt, null);
+//
+//        final AlertDialog alertD = new AlertDialog.Builder(this).create();
+//
+//        FloatingActionButton btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
+//
+//        btnPlay.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                alertD.dismiss();
+//            }
+//        });
+//
+//        alertD.setView(promptView);
+//
+//        alertD.show();
     }
 
     @Override
