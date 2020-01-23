@@ -57,6 +57,8 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
     private static final String TAG = "LectureActivity";
 
+    private VoiceOut voiceOut = null;
+
     private Toast toast;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
@@ -89,6 +91,8 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
+        voiceOut = new VoiceOut(this);
 
         //nécessaire pour osmdroid :
         Context ctx = getApplicationContext();
@@ -193,7 +197,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, listCircleEveil.size() + nombreCercle);
         cercle_eveil.drawCircle(map, Color.RED);
         listCircleEveil.add(cercle_eveil);
-        map.getOverlays().add(0,cercle_eveil);
+        map.getOverlays().add(0, cercle_eveil);
 
         //Cercle de Validation
         CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(geoPoint, 3, listCircleValidation.size() + nombreCercle);
@@ -300,52 +304,61 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
             GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
 
             if (accuracyMeters > distanceEveilMeters + distanceTrajetMeters) {
-                toast.setText("Acquisition de la position en cours.");
-                toast.show();
+                voiceOut.speak("Acquisition de la position en cours.");
+//                toast.setText("Acquisition de la position en cours.");
+//                toast.show();
                 return;
             }
 
             if (!onGoing) {
+                voiceOut.speak("Vous suivez le trajet :" + nomFichier);
                 double distance = depart.getPosition().distanceToAsDouble(locationGeo);
                 if (distance < accuracyMeters) {
                     onGoing = true;
-                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet." + depart.getSnippet());
-                    toast.show();
+                    voiceOut.speak("Vous êtes sur le point de départ. Démarrage du trajet." + depart.getSnippet());
+//                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet." + depart.getSnippet());
+//                    toast.show();
                     ModifColorValidation(compteur);
                 } else {
-                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
+                    voiceOut.speak("Placez-vous sur le point de départ s'il vous plaît.");
+//                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
+//                    toast.show();
                     ModifColorEveil(compteur);
-                    toast.show();
                 }
             } else {
                 if (!trajet.isCloseTo(locationGeo, accuracyPixels + distanceTrajetPixels, map)) {
-                    toast.setText("Revenez sur vos pas, vous vous éloignez du trajet.");
-                    toast.show();
+                    voiceOut.speak("Revenez sur vos pas, vous vous éloignez du trajet.");
+//                    toast.setText("Revenez sur vos pas, vous vous éloignez du trajet.");
+//                    toast.show();
                 } else {
                     double distance = indications.get(compteur).getPosition().distanceToAsDouble(locationGeo);
 
                     if (distance < accuracyMeters + 6) {
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
-                            toast.setText("Vous arrivez dans 20m !");
-                            toast.show();
-                            ModifColorEveil(compteur+1);
+                            voiceOut.speak("Vous arrivez dans 20 mètres !");
+//                            toast.setText("Vous arrivez dans 20m !");
+//                            toast.show();
+                            ModifColorEveil(compteur + 1);
                         }
                         if (!displayedBefore) {
-                            toast.setText("Éveil du " + indications.get(compteur).getTitle());
-                            toast.show();
-                            ModifColorEveil(compteur+1);
+                            voiceOut.speak("Éveil du " + indications.get(compteur).getTitle());
+//                            toast.setText("Éveil du " + indications.get(compteur).getTitle());
+//                            toast.show();
+                            ModifColorEveil(compteur + 1);
                             displayedBefore = true;
                         }
                     }
                     if (distance < accuracyMeters + 2) {
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
-                            toast.setText("Vous êtes arrivés !");
-                            toast.show();
-                            ModifColorValidation(compteur+1);
+                            voiceOut.speak("Vous êtes arrivés !");
+//                            toast.setText("Vous êtes arrivés !");
+//                            toast.show();
+                            ModifColorValidation(compteur + 1);
                         } else {
-                            toast.setText(indications.get(compteur).getSnippet());
-                            toast.show();
-                            ModifColorValidation(compteur+1);
+                            voiceOut.speak(" "+indications.get(compteur).getSnippet());
+//                            toast.setText(indications.get(compteur).getSnippet());
+//                            toast.show();
+                            ModifColorValidation(compteur + 1);
                             compteur++;
                             displayedBefore = false;
                         }

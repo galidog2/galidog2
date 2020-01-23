@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class ChoixMemorisationActivity extends GenericActivity implements RecyclerViewAdapter.OnTrajetListener {
 
+    private VoiceOut voiceOut = null;
     private RecyclerViewAdapter adapter;
     ArrayList<String> listeFichiers = new ArrayList<>();
     private static final String TAG = "ChoixMemorisationActivity";
@@ -38,6 +39,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choix_memorisation);
 
+        voiceOut = new VoiceOut(this);
         // Utilisation du RecyclerView
         recyclerView = findViewById(R.id.recycler_view);
 
@@ -112,6 +114,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Voulez-vous supprimer le trajet " + listeFichiers.get(position) + " ?");
+        voiceOut.speak("Voulez-vous supprimer le trajet " + listeFichiers.get(position) + " ?");
         // Cet AlertDialog comporte un bouton pour valider…
         alertDialogBuilder.setPositiveButton("Supprimer", new DialogInterface.OnClickListener() {
             @Override
@@ -218,6 +221,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Entrez le nom du trajet");
+        voiceOut.speak("Donnez le nom du trajet");//TODO: voiceIn
         alertDialogBuilder.setView(editText);
         // Cet AlertDialog comporte un bouton pour valider…
         alertDialogBuilder.setPositiveButton("Valider", new DialogInterface.OnClickListener() {
@@ -225,6 +229,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             public void onClick(DialogInterface arg0, int arg1) {
                 Intent intent = new Intent(ChoixMemorisationActivity.this, AjoutTrajetActivity.class);
                 intent.putExtra("nouveaufichier", editText.getText().toString());
+                voiceOut.speak("Vous créez le trajet :" + editText.getText().toString());
                 startActivity(intent);
             }
         });
@@ -250,6 +255,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         if (!cb_supprimer.isChecked()) {
             Intent intent = new Intent(ChoixMemorisationActivity.this, LectureActivity.class);
             intent.putExtra("nomfichier", listeFichiers.get(position));
+            voiceOut.speak("Vous suivez le trajet :" + listeFichiers.get(position));
             startActivity(intent);
         } else {
             alerteDialogSupprimer(position);
