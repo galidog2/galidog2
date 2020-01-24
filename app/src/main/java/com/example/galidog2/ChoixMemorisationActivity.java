@@ -82,10 +82,11 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         File directory = new File(path);
         File[] files = directory.listFiles();
         String nomFichier;
-        for (File file : files) {
-            nomFichier = file.getName().substring(0, file.getName().lastIndexOf('.'));
-            listeFichiers.add(nomFichier);
-        }
+        if (files != null)
+            for (File file : files) {
+                nomFichier = file.getName().substring(0, file.getName().lastIndexOf('.'));
+                listeFichiers.add(nomFichier);
+            }
         return listeFichiers;
     }
 

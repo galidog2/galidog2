@@ -86,7 +86,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private int nombreCercle = 0;//Cet entier permet de suivre l'avancée dans les cercles
     private Button bt_check;
     private List<GeoPoint> mGeoPoints;
-    private Polyline trajet;
     private Marker depart;
     private ArrayList<Marker> indications = new ArrayList<>();
 

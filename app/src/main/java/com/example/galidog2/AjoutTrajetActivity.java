@@ -3,7 +3,6 @@ package com.example.galidog2;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -219,15 +218,6 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
         }
     }
-
-    private void trouverAdresse(GeoPoint geoPoint) {
-        // Reverse Geocoding
-        GeocoderNominatim geocoder = new GeocoderNominatim(MY_USERAGENT);
-        String theAddress;
-  
-    /**
-    * Fonction pour créer les cercles d'Eveil et de Validation
-    */
 
     private void createCircle(GeoPoint geoPoint) {
         //Cercle d'Eveil
@@ -455,7 +445,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
     private void tracerMarqueur(String titre) {
         Marker marker = new Marker(map);
-        marker.setPosition(dernierPoint);
+        if (dernierPoint != null)
+            marker.setPosition(dernierPoint);
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         marker.setIcon(getDrawable(R.drawable.marqueur));
         marker.setSubDescription("Description possible");//TODO : Utiliser trouverAdresse() ici
