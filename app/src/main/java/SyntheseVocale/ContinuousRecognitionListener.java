@@ -1,77 +1,52 @@
-package com.example.galidog2;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+package SyntheseVocale;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.os.PowerManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import com.example.galidog2.GenericActivity;
 
 import java.util.ArrayList;
 
-public class GenericActivity extends AppCompatActivity implements RecognitionListener {
+public class ContinuousRecognitionListener extends GenericActivity implements RecognitionListener {
 
     private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
     private String LOG_TAG = "ContinuousRecognitionListener";
+    private Activity parentActivity;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_generic);
+    public ContinuousRecognitionListener(Activity parentActivity){
+        this.parentActivity = parentActivity;
 
-        //Recognition Listener
+        showToast("Criou");
+
+        //Speech Recognition
         resetSpeechRecognizer();
 
         // check for permission
-        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
+        int permissionCheck = ContextCompat.checkSelfPermission(parentActivity.getApplicationContext(), Manifest.permission.RECORD_AUDIO);
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
+            ActivityCompat.requestPermissions(parentActivity, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
             return;
         }
 
         setRecogniserIntent();
     }
 
-    public void audioModeStart() {
-        Toast.makeText(this, "On entre dans le mode audio", Toast.LENGTH_SHORT).show();
-
-        new CountDownTimer(3000, 1000) {
-
-            public void onTick(long millisUntilFinished) {
-                Window window = getWindow();
-                window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
-                wl.acquire();
-            }
-
-            public void onFinish() {
-                Window window = getWindow();
-                window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
-                wl.release();
-
-            }
-        }.start();
-
+    public ContinuousRecognitionListener() {
+        this.parentActivity = getParent();
     }
 
     @Override
@@ -109,9 +84,11 @@ public class GenericActivity extends AppCompatActivity implements RecognitionLis
         showLog( "stop");
         super.onStop();
 
+        /*
         if (speech != null) {
             speech.destroy();
         }
+        */
     }
 
     @Override
@@ -216,9 +193,9 @@ public class GenericActivity extends AppCompatActivity implements RecognitionLis
 
         if(speech != null)
             speech.destroy();
-        speech = SpeechRecognizer.createSpeechRecognizer(this);
-        showLog("isRecognitionAvailable: " + SpeechRecognizer.isRecognitionAvailable(this));
-        if(SpeechRecognizer.isRecognitionAvailable(this))
+        speech = SpeechRecognizer.createSpeechRecognizer(this.parentActivity);
+        //showLog("isRecognitionAvailable: " + SpeechRecognizer.isRecognitionAvailable(this.parentActivity));
+        if(SpeechRecognizer.isRecognitionAvailable(this.parentActivity))
             speech.setRecognitionListener(this);
         else
             finish();
@@ -235,11 +212,13 @@ public class GenericActivity extends AppCompatActivity implements RecognitionLis
     }
 
     private void showToast (String text) {
-        Toast.makeText(this.getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this.parentActivity.getApplicationContext(), text, Toast.LENGTH_SHORT).show();
     }
 
     private void showLog(String text) {
-        //showToast("Log: " + text);
+        showToast("Log: " + text);
         Log.i(LOG_TAG, text);
     }
+
+
 }
