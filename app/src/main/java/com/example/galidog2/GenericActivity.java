@@ -17,6 +17,7 @@ import android.os.PowerManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.speech.tts.Voice;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
@@ -24,17 +25,23 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import SyntheseVocale.Interpretation;
+import SyntheseVocale.VoiceOut;
+
 public class GenericActivity extends AppCompatActivity implements RecognitionListener {
 
     private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
-    private String LOG_TAG = "ContinuousRecognitionListener";
+    private String LOG_TAG = "RecognitionListener";
+    private Interpretation interpretation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_generic);
+
+        this.interpretation = new Interpretation(this);
 
         //Recognition Listener
         resetSpeechRecognizer();
@@ -133,13 +140,16 @@ public class GenericActivity extends AppCompatActivity implements RecognitionLis
     @Override
     public void onResults(Bundle results) {
         showLog( "onResults");
+
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         String text = "";
-        for (String result : matches)
+        for (String result : matches) {
             text += result + "\n";
+            interpretation.interpreterText(result);
+        }
 
-        showToast("Matchs: " + text);
+        showLog("Matchs: " + text);
         speech.startListening(recognizerIntent);
     }
 
@@ -147,7 +157,6 @@ public class GenericActivity extends AppCompatActivity implements RecognitionLis
     public void onError(int errorCode) {
         String errorMessage = getErrorText(errorCode);
         showLog( "FAILED " + errorMessage);
-        showToast(errorMessage);
 
         // rest voice recogniser
         resetSpeechRecognizer();
