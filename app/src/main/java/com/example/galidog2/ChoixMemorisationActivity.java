@@ -23,7 +23,9 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class ChoixMemorisationActivity extends GenericActivity implements RecyclerViewAdapter.OnTrajetListener {
+import Constants.AudioMatchs;
+
+public class ChoixMemorisationActivity extends SpeechRecognizerActivity implements RecyclerViewAdapter.OnTrajetListener {
 
     private RecyclerViewAdapter adapter;
     ArrayList<String> listeFichiers = new ArrayList<>();
@@ -205,6 +207,15 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
                     demandePermissionStockageEcriture();
                 }
             }
+        }
+    }
+
+    @Override
+    public void doMatch(String match) {
+        if (match.equals(AudioMatchs.matchsAccueil.get(0))){
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
         }
     }
 

@@ -30,7 +30,7 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //Recognition Listener
+
         resetSpeechRecognizer();
 
         // check for permission
@@ -60,7 +60,7 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
 
     @Override
     public void onResume() {
-        showLog( "resume");
+        showLog( "RESUME");
         super.onResume();
         resetSpeechRecognizer();
         speech.startListening(recognizerIntent);
@@ -68,14 +68,17 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
 
     @Override
     protected void onPause() {
-        showLog( "pause");
+        showLog( "PAUSE");
         super.onPause();
-        //speech.stopListening();
+        speech.stopListening();
+        if (speech != null) {
+            speech.destroy();
+        }
     }
 
     @Override
     protected void onStop() {
-        showLog( "stop");
+        showLog( "STOP");
         super.onStop();
 
         if (speech != null) {
@@ -118,7 +121,7 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
     @Override
     public void onError(int errorCode) {
         String errorMessage = getErrorText(errorCode);
-        //showLog( "FAILED " + errorMessage);
+        showLog( "FAILED " + errorMessage);
 
         // rest voice recogniser
         resetSpeechRecognizer();
@@ -188,7 +191,6 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
         if(speech != null)
             speech.destroy();
         speech = SpeechRecognizer.createSpeechRecognizer(this);
-        showLog("isRecognitionAvailable: " + SpeechRecognizer.isRecognitionAvailable(this));
         if(SpeechRecognizer.isRecognitionAvailable(this))
             speech.setRecognitionListener(this);
         else
@@ -196,10 +198,9 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
     }
 
     private void setRecogniserIntent() {
-
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
-                "en");
+                "fr");
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
@@ -223,7 +224,6 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
     }
 
     private void showLog(String text) {
-        //showToast("Log: " + text);
         Log.i(LOG_TAG, text);
     }
 
