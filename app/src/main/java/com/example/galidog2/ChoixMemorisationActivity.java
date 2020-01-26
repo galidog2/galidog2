@@ -34,6 +34,7 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 2;
     private CheckBox cb_supprimer;
     private RecyclerView recyclerView;
+    FloatingActionButton floatingActionButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +60,7 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
         }
 
         // On crée le bouton flottant qui permet d'ajouter des listes
-        FloatingActionButton floatingActionButton = findViewById(R.id.fab);
+        floatingActionButton = findViewById(R.id.fab);
         // Les variables ont besoin d'être déclarées en final car on les utilise dans un cast local.
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -216,6 +217,13 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
+        }
+        else if (match.equals(AudioMatchs.matchsAjouterTrajet.get(0))){
+            showToast("Tchamou");
+            floatingActionButton.callOnClick();
+        }
+        else if (match.equals(AudioMatchs.matchsSupprimerTrajet.get(0))){
+            cb_supprimer.setChecked(!cb_supprimer.isChecked());
         }
     }
 

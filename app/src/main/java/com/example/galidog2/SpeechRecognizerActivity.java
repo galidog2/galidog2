@@ -219,7 +219,7 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
     //do whatever we want with the matched audio
     public abstract void doMatch(String match);
 
-    private void showToast (String text) {
+    public void showToast (String text) {
         Toast.makeText(this.getApplicationContext(), text, Toast.LENGTH_SHORT).show();
     }
 
