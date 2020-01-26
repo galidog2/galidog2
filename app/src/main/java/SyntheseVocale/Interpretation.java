@@ -1,34 +1,29 @@
 package SyntheseVocale;
 
 import android.app.Activity;
-import android.content.Intent;
+import java.util.List;
 
-import com.example.galidog2.ChoixMemorisationActivity;
-
-import java.util.ArrayList;
+import Constants.AudioMatchs;
 
 public class Interpretation {
 
     private Activity activity;
-    private VoiceOut voiceOut;
-    private ArrayList<String> matchList = new ArrayList<String>();
 
     public Interpretation(Activity activity) {
         this.activity = activity;
-        voiceOut = new VoiceOut(activity.getApplicationContext());
     }
 
     public String findMatch(String text) {
-        addMatchs();
-        for (int i=0; i< matchList.size(); i++)
-            if (text.contains(matchList.get(i)))
-                return matchList.get(i);
-        return null;
-    }
+        for (int i=0; i< AudioMatchs.matchsList.size(); i++) {
+            List<String> list = AudioMatchs.matchsList.get(i);
+            int listSize = list.size();
+            for (int j=0; j<listSize; j++)
+                if (text.contains(list.get(j)))
+                    return list.get(0); //always the first one, for standards implementations in Activities
+        }
 
-    private void addMatchs(){
-        matchList.add("mémorisation");
-        matchList.add("ajouter trajet");
+        //no Matchs
+        return null;
     }
 
 }

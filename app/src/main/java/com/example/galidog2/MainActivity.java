@@ -15,6 +15,8 @@ import androidx.appcompat.widget.Toolbar;
 
 import org.osmdroid.config.Configuration;
 
+import Constants.AudioMatchs;
+
 public class MainActivity extends SpeechRecognizerActivity {
 
     @Override
@@ -44,7 +46,7 @@ public class MainActivity extends SpeechRecognizerActivity {
 
     @Override
     public void doMatch(String match) {
-        if (match.equals("mémorisation")){
+        if (match.equals(AudioMatchs.matchsMemorisation.get(0))){
             Intent intent = new Intent(this, ChoixMemorisationActivity.class);
             this.startActivity(intent);
             //this.voiceOut.speak("Mode mémorisation");
