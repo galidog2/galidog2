@@ -15,7 +15,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import org.osmdroid.config.Configuration;
 
-public class MainActivity extends GenericActivity {
+public class MainActivity extends SpeechRecognizerActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +40,15 @@ public class MainActivity extends GenericActivity {
             }
         });
 
+    }
+
+    @Override
+    public void doMatch(String match) {
+        if (match.equals("mémorisation")){
+            Intent intent = new Intent(this, ChoixMemorisationActivity.class);
+            this.startActivity(intent);
+            //this.voiceOut.speak("Mode mémorisation");
+        }
     }
 
     @Override
