@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.speech.tts.Voice;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -16,14 +17,20 @@ import androidx.appcompat.widget.Toolbar;
 import org.osmdroid.config.Configuration;
 
 import Constants.AudioMatchs;
+import SyntheseVocale.VoiceOut;
 
 public class MainActivity extends SpeechRecognizerActivity {
+
+    Button memorisationButton;
+    VoiceOut voiceOut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(this));
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        voiceOut = new VoiceOut(this.getApplicationContext());
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
@@ -33,8 +40,8 @@ public class MainActivity extends SpeechRecognizerActivity {
         findViewById(R.id.description).setEnabled(false);
 
 
-        Button memorisationB = (Button)findViewById(R.id.mémorisation);
-        memorisationB.setOnClickListener(new View.OnClickListener() {
+        memorisationButton = (Button)findViewById(R.id.mémorisation);
+        memorisationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, ChoixMemorisationActivity.class);
@@ -47,9 +54,11 @@ public class MainActivity extends SpeechRecognizerActivity {
     @Override
     public void doMatch(String match) {
         if (match.equals(AudioMatchs.matchsMemorisation.get(0))){
-            Intent intent = new Intent(this, ChoixMemorisationActivity.class);
-            this.startActivity(intent);
-            //this.voiceOut.speak("Mode mémorisation");
+            //Intent intent = new Intent(this, ChoixMemorisationActivity.class);
+            //this.startActivity(intent);
+
+            this.voiceOut.speak("Mode mémorisation");
+            memorisationButton.callOnClick();
         }
     }
 

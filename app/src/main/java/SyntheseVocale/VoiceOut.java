@@ -25,7 +25,7 @@ public class VoiceOut {
     }
 
     public void speak(String toSpeak) {
-        Toast.makeText(context, "To Speak : " + toSpeak,Toast.LENGTH_SHORT).show();
+        //Toast.makeText(context, "To Speak : " + toSpeak,Toast.LENGTH_SHORT).show();
         textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
 
