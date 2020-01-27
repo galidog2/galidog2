@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.speech.tts.Voice;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -16,7 +15,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import org.osmdroid.config.Configuration;
 
-import Constants.AudioMatchs;
+import Constants.Audictionary;
 import SyntheseVocale.VoiceOut;
 
 public class MainActivity extends SpeechRecognizerActivity {
@@ -52,8 +51,13 @@ public class MainActivity extends SpeechRecognizerActivity {
     }
 
     @Override
+    public void doCommandeVocal(String command) {
+
+    }
+
+    @Override
     public void doMatch(String match) {
-        if (match.equals(AudioMatchs.matchsMemorisation.get(0))){
+        if (match.equals(Audictionary.matchsMemorisation.get(0))){
             //Intent intent = new Intent(this, ChoixMemorisationActivity.class);
             //this.startActivity(intent);
 

@@ -17,7 +17,7 @@ import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.List;
 
-import Constants.AudioMatchs;
+import Constants.Audictionary;
 
 public abstract class SpeechRecognizerActivity extends GenericActivity implements RecognitionListener {
 
@@ -109,10 +109,13 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         String text = "";
+        boolean hasMacth = false;
         for (String result : matches) {
             text += result + "\n";
-            findAndDoMatch(result);
+            hasMacth = findAndDoMatch(result) || hasMacth;
         }
+        if (!hasMacth)
+            doCommandeVocal(matches.get(0));
 
         showLog("Matchs: " + text);
         speech.startListening(recognizerIntent);
@@ -206,17 +209,24 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
     }
 
-    public void findAndDoMatch(String text) {
-        for (int i = 0; i< AudioMatchs.matchsList.size(); i++) {
-            List<String> list = AudioMatchs.matchsList.get(i);
+    public boolean findAndDoMatch(String text) {
+        boolean matched = false;
+        for (int i = 0; i< Audictionary.matchsList.size(); i++) {
+            List<String> list = Audictionary.matchsList.get(i);
             int listSize = list.size();
             for (int j=0; j<listSize; j++)
-                if (text.contains(list.get(j))) //found a match
+                if (text.contains(list.get(j))) { //found a match
+                    matched = true;
                     doMatch(list.get(0)); //always the first one, for standards implementations in Activities
+                }
         }
+        return matched;
     }
 
-    //do whatever we want with the matched audio
+    //do whatever we want with whatever we receive
+    public abstract void doCommandeVocal(String command);
+
+    //do whatever we want with matched audio
     public abstract void doMatch(String match);
 
     public void showToast (String text) {

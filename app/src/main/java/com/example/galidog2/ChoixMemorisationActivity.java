@@ -23,7 +23,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import Constants.AudioMatchs;
+import Constants.Audictionary;
 
 public class ChoixMemorisationActivity extends SpeechRecognizerActivity implements RecyclerViewAdapter.OnTrajetListener {
 
@@ -34,7 +34,10 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 2;
     private CheckBox cb_supprimer;
     private RecyclerView recyclerView;
-    FloatingActionButton floatingActionButton;
+    private FloatingActionButton floatingActionButton;
+    private EditText editText;
+    private boolean ajouterTrajetDialogShown = false;
+    private AlertDialog alertDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -212,18 +215,28 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
     }
 
     @Override
+    public void doCommandeVocal(String command) {
+        if (ajouterTrajetDialogShown)
+            editText.setText(command);
+    }
+
+    @Override
     public void doMatch(String match) {
-        if (match.equals(AudioMatchs.matchsAccueil.get(0))){
+        if (match.equals(Audictionary.matchsAccueil.get(0))){
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
-        else if (match.equals(AudioMatchs.matchsAjouterTrajet.get(0))){
+        else if (match.equals(Audictionary.matchsAjouterTrajet.get(0))){
             showToast("Tchamou");
             floatingActionButton.callOnClick();
         }
-        else if (match.equals(AudioMatchs.matchsSupprimerTrajet.get(0))){
+        else if (match.equals(Audictionary.matchsSupprimerTrajet.get(0))){
             cb_supprimer.setChecked(!cb_supprimer.isChecked());
+        } else if (match.equals(Audictionary.matchsAnnulerAjouterTrajetDialog.get(0))){
+            alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
+        } else if (match.equals(Audictionary.matchsValiderAjouterTrajetDialog.get(0))){
+            alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
         }
     }
 
@@ -231,14 +244,16 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
      * La méthode CreerAlertDialog crée une fenêtre où l'utisateur peut
      * rentrer le nom de la nouvelle liste.
      */
-    private void CreerAlertDialog() {
 
-        final EditText editText = new EditText(this);
+    private void CreerAlertDialog() {
+        ajouterTrajetDialogShown = true;
+        editText = new EditText(this);
         // Un AlertDialog fonctionne comme une «mini-activité».
         // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Entrez le nom du trajet");
         alertDialogBuilder.setView(editText);
+
         // Cet AlertDialog comporte un bouton pour valider…
         alertDialogBuilder.setPositiveButton("Valider", new DialogInterface.OnClickListener() {
             @Override
@@ -248,14 +263,16 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
                 startActivity(intent);
             }
         });
+
         // … et un bouton pour annuler, qui arrête l'AlertDialog.
         alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                ajouterTrajetDialogShown = false;
                 dialog.cancel();
             }
         });
-        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog = alertDialogBuilder.create();
         alertDialog.show();
     }
 
