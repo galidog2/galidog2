@@ -26,7 +26,6 @@ public final class Audictionary {
     //TRAJET SELECTIONNÉ
     public static final List<String> matchsCheckTrajet = Collections.unmodifiableList(Arrays.asList("check"));
 
-
     //Ajouter toutes les lists ci-dessous dans la variable matchList
     public static final List<List<String>> matchsList =
             Collections.unmodifiableList(Arrays.asList(matchsMemorisation,matchsAccueil, matchsAjouterTrajet,

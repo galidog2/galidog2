@@ -57,11 +57,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import Constants.Audictionary;
+
 
 /**
  * Activity générant la carte pour se diriger
  */
-public class LectureActivity extends AppCompatActivity implements MapEventsReceiver {
+public class LectureActivity extends SpeechRecognizerActivity implements MapEventsReceiver {
 
     private static final String TAG = "LectureActivity";
 
@@ -94,6 +96,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private int distanceEveilMeters = 10;
     private int distanceTrajetMeters = 5;
     private int compteur=0;
+    
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -513,4 +516,19 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     public boolean longPressHelper(GeoPoint p) {
         return false;
     }
+
+
+    @Override
+    public void doCommandeVocal(String command) {
+
+    }
+
+    @Override
+    public void doMatch(String match) {
+        if (Audictionary.matchsSuivreTrajet.get(0).equalsIgnoreCase(match))
+            switchMyLocation.setChecked(!switchMyLocation.isChecked());
+        else if (Audictionary.matchsCheckTrajet.get(0).equalsIgnoreCase(match))
+            bt_check.callOnClick();
+    }
+
 }
