@@ -53,6 +53,8 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import Constants.Audictionary;
+
 /**
  * Activité qui permet l'enregistrement d'un nouveau trajet
  */
@@ -617,12 +619,21 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
 
     @Override
     public void doCommandeVocal(String command) {
-
+        //rien à faire avec les commandes aleactoires
     }
 
     @Override
     public void doMatch(String match) {
-        btnPlay.callOnClick();
+        if (Audictionary.matchsPlayTrajet.get(0).equalsIgnoreCase(match))
+            btnPlay.callOnClick();
+        else if (Audictionary.matchsPauseTrajet.get(0).equalsIgnoreCase(match))
+            bouton_pause.setChecked(!bouton_pause.isChecked());
+        else if (Audictionary.matchsArretTrajet.get(0).equalsIgnoreCase(match))
+            bouton_arret.callOnClick();
+        else if (Audictionary.matchsSuivreTrajet.get(0).equalsIgnoreCase(match))
+            switchMyLocation.setChecked(!switchMyLocation.isChecked());
+        else if (Audictionary.matchsCercletTrajet.get(0).equalsIgnoreCase(match))
+            bouton_cercle.callOnClick();
     }
 
 }

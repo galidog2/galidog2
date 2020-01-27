@@ -215,7 +215,7 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
             List<String> list = Audictionary.matchsList.get(i);
             int listSize = list.size();
             for (int j=0; j<listSize; j++)
-                if (text.contains(list.get(j))) { //found a match
+                if (text.equals(list.get(j))) { //found a match
                     matched = true;
                     doMatch(list.get(0)); //always the first one, for standards implementations in Activities
                 }
@@ -233,7 +233,7 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
         Toast.makeText(this.getApplicationContext(), text, Toast.LENGTH_SHORT).show();
     }
 
-    private void showLog(String text) {
+    public void showLog(String text) {
         Log.i(LOG_TAG, text);
     }
 
