@@ -14,11 +14,12 @@ public final class Audictionary {
     public static final List<String> matchsSupprimerTrajet = Collections.unmodifiableList(Arrays.asList("supprimer trajet","supprimer","enlever"));
     public static final List<String> matchsAnnulerAjouterTrajetDialog = Collections.unmodifiableList(Arrays.asList("annuler trajet","annuler", "fermer", "annulé", "annule"));
     public static final List<String> matchsValiderAjouterTrajetDialog = Collections.unmodifiableList(Arrays.asList("valider trajet","valider", "confirmer"));
+    public static final List<String> matchsPlayTrajet = Collections.unmodifiableList(Arrays.asList("play","jouer", "commencer", "démarrer"));
 
 
 
     //Ajouter toutes les lists ci-dessous dans la variable matchList
     public static final List<List<String>> matchsList =
             Collections.unmodifiableList(Arrays.asList(matchsMemorisation,matchsAccueil, matchsAjouterTrajet,
-                    matchsSupprimerTrajet, matchsAnnulerAjouterTrajetDialog, matchsValiderAjouterTrajetDialog));
+                    matchsSupprimerTrajet, matchsAnnulerAjouterTrajetDialog, matchsValiderAjouterTrajetDialog, matchsPlayTrajet));
 }

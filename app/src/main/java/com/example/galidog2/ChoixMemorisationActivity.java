@@ -216,8 +216,14 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
 
     @Override
     public void doCommandeVocal(String command) {
-        if (ajouterTrajetDialogShown)
+        if (ajouterTrajetDialogShown)   //nomer trajet
             editText.setText(command);
+        else {          //sélection d'un trajet. Command = Nom du trajet demmandé, peut-être (on verifie)
+            if (!listeFichiers.isEmpty())
+                for (int i=0; i < listeFichiers.size(); i++)
+                    if (listeFichiers.get(i).equalsIgnoreCase(command)) //nom du trajet était dit, du coup on le demarre
+                        onTrajetClick(i);
+        }
     }
 
     @Override

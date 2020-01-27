@@ -56,7 +56,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 /**
  * Activité qui permet l'enregistrement d'un nouveau trajet
  */
-public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsReceiver {
+public class AjoutTrajetActivity extends SpeechRecognizerActivity implements MapEventsReceiver {
 
     private static final double rayon = 6371; // km
     /**
@@ -584,13 +584,14 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
      * Message demandant la confirmation avant de commencer l'enregistrement
      * La localisation doit etre activée dans les paramètres ...
      */
+    FloatingActionButton btnPlay;
     private void AlertDialogDemarrer() {
         final LayoutInflater layoutInflater = LayoutInflater.from(this);
         View promptView = layoutInflater.inflate(R.layout.prompt, null);
 
         final AlertDialog alertD = new AlertDialog.Builder(this).create();
 
-        FloatingActionButton btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
+        btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
 
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -613,4 +614,15 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     public boolean longPressHelper(GeoPoint p) {
         return false;
     }
+
+    @Override
+    public void doCommandeVocal(String command) {
+
+    }
+
+    @Override
+    public void doMatch(String match) {
+        btnPlay.callOnClick();
+    }
+
 }
