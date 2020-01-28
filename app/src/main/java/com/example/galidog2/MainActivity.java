@@ -43,6 +43,7 @@ public class MainActivity extends SpeechRecognizerActivity {
         memorisationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                voiceOut.speak(Audictionary.SPEAK_ENTRER_MODE_MEMORISATION);
                 Intent intent = new Intent(MainActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);
             }
@@ -57,13 +58,8 @@ public class MainActivity extends SpeechRecognizerActivity {
 
     @Override
     public void doMatch(String match) {
-        if (match.equals(Audictionary.matchsMemorisation.get(0))){
-            //Intent intent = new Intent(this, ChoixMemorisationActivity.class);
-            //this.startActivity(intent);
-
-            this.voiceOut.speak("Mode mémorisation");
+        if (match.equals(Audictionary.matchsMemorisation.get(0)))
             memorisationButton.callOnClick();
-        }
     }
 
     @Override

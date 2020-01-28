@@ -30,6 +30,9 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //Pour silencier les beeps, décommenter les 2 lines ci-dessus
+        //AudioManager audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        //audio.adjustVolume(AudioManager.ADJUST_MUTE,AudioManager.FLAG_SHOW_UI);
 
         resetSpeechRecognizer();
 
@@ -115,7 +118,8 @@ public abstract class SpeechRecognizerActivity extends GenericActivity implement
             hasMacth = findAndDoMatch(result) || hasMacth;
         }
         if (!hasMacth)
-            doCommandeVocal(matches.get(0));
+            for (String result : matches)
+                doCommandeVocal(result);
 
         showLog("Matchs: " + text);
         speech.startListening(recognizerIntent);

@@ -58,6 +58,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import Constants.Audictionary;
+import SyntheseVocale.VoiceOut;
 
 
 /**
@@ -96,7 +97,6 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
     private int distanceEveilMeters = 10;
     private int distanceTrajetMeters = 5;
     private int compteur=0;
-    
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

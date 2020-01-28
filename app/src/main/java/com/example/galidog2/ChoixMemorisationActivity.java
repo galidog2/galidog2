@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import Constants.Audictionary;
+import SyntheseVocale.VoiceOut;
 
 public class ChoixMemorisationActivity extends SpeechRecognizerActivity implements RecyclerViewAdapter.OnTrajetListener {
 
@@ -36,13 +37,19 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
     private RecyclerView recyclerView;
     private FloatingActionButton floatingActionButton;
     private EditText editText;
-    private boolean ajouterTrajetDialogShown = false;
     private AlertDialog alertDialog;
+    private AlertDialog alertDialogSupprimer;
+    private boolean ajouterTrajetDialogShown = false;
+    private boolean supprimerTrajetDialogShown = false;
+    private VoiceOut voiceOut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choix_memorisation);
+
+        //speaker
+        voiceOut = new VoiceOut(getApplicationContext());
 
         // Utilisation du RecyclerView
         recyclerView = findViewById(R.id.recycler_view);
@@ -92,6 +99,8 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             for (File file : files) {
                 nomFichier = file.getName().substring(0, file.getName().lastIndexOf('.'));
                 listeFichiers.add(nomFichier);
+                voiceOut.speak(nomFichier);
+
             }
         return listeFichiers;
     }
@@ -114,9 +123,9 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
      * valider ou non la suppression du trajet.
      */
     private void alerteDialogSupprimer(final int position) {
-
         // Un AlertDialog fonctionne comme une «mini-activité».
         // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
+        supprimerTrajetDialogShown = true;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Voulez-vous supprimer le trajet " + listeFichiers.get(position) + " ?");
         // Cet AlertDialog comporte un bouton pour valider…
@@ -127,6 +136,7 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
                 //On met à jour l'affichage
                 Intent intent = new Intent(ChoixMemorisationActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);
+                supprimerTrajetDialogShown = false;
             }
         });
         // … et un bouton pour annuler, qui arrête l'AlertDialog.
@@ -134,10 +144,11 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
+                supprimerTrajetDialogShown = false;
             }
         });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
+        alertDialogSupprimer = alertDialogBuilder.create();
+        alertDialogSupprimer.show();
     }
 
     /**
@@ -233,17 +244,22 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
-        else if (match.equals(Audictionary.matchsAjouterTrajet.get(0))){
-            showToast("Tchamou");
+        else if (match.equals(Audictionary.matchsAjouterTrajet.get(0)))
             floatingActionButton.callOnClick();
+        else if (match.equals(Audictionary.matchsSupprimerTrajet.get(0))) { //"Supprimer appellé"
+            if (supprimerTrajetDialogShown)
+                alertDialogSupprimer.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
+            else
+                cb_supprimer.setChecked(!cb_supprimer.isChecked());
         }
-        else if (match.equals(Audictionary.matchsSupprimerTrajet.get(0))){
-            cb_supprimer.setChecked(!cb_supprimer.isChecked());
-        } else if (match.equals(Audictionary.matchsAnnulerAjouterTrajetDialog.get(0))){
-            alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
-        } else if (match.equals(Audictionary.matchsValiderAjouterTrajetDialog.get(0))){
+        else if (match.equals(Audictionary.matchsAnnulerDialog.get(0))) {
+            if (supprimerTrajetDialogShown)
+                alertDialogSupprimer.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
+            else if (ajouterTrajetDialogShown)
+                alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
+        }
+        else if (match.equals(Audictionary.matchsValiderAjouterTrajetDialog.get(0)))
             alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
-        }
     }
 
     /**
