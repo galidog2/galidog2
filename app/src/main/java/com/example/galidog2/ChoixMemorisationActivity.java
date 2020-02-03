@@ -120,6 +120,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
                 supprimerTrajet(position);
+                voiceOut.speak("Trajet supprimé");
                 //On met à jour l'affichage
                 Intent intent = new Intent(ChoixMemorisationActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);

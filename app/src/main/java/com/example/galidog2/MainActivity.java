@@ -45,7 +45,7 @@ public class MainActivity extends GenericActivity {
         memorisationB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                voiceOut.speak("Mode mémorisation. Choisissez un trajet ou créez en un");
                 Intent intent = new Intent(MainActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);
             }
