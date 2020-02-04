@@ -599,6 +599,7 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
      * Message demandant la confirmation avant de commencer l'enregistrement
      * La localisation doit etre activée dans les paramètres ...
      */
+    AlertDialog alertDialog;
     private void AlertDialogDemarrer() {
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
@@ -616,7 +617,7 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
                 startActivity(intent);
             }
         });
-        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog = alertDialogBuilder.create();
         alertDialog.show();
 
 //        final LayoutInflater layoutInflater = LayoutInflater.from(this);
@@ -656,7 +657,7 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
     @Override
     public void doMatch(String match) {
         if (Audictionary.matchsPlayTrajet.get(0).equalsIgnoreCase(match))
-            btnPlay.callOnClick();
+            alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
         else if (Audictionary.matchsPauseTrajet.get(0).equalsIgnoreCase(match))
             bouton_pause.setChecked(!bouton_pause.isChecked());
         else if (Audictionary.matchsArretTrajet.get(0).equalsIgnoreCase(match))

@@ -41,7 +41,6 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
     private AlertDialog alertDialogSupprimer;
     private boolean ajouterTrajetDialogShown = false;
     private boolean supprimerTrajetDialogShown = false;
-    private VoiceOut voiceOut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -312,4 +311,5 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             alerteDialogSupprimer(position);
         }
     }
+
 }
