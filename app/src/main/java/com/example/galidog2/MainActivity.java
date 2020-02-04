@@ -37,7 +37,7 @@ public class MainActivity extends GenericActivity {
         bt_speak.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                voiceOut.speak("Wouf, wouf ! Bienvenue dans l'application Galidog2. Choisissez un mode.");
+                voiceOut.speak("Wouf, wouf ! Bienvenue dans l'application Galidog. Choisissez un mode.");
             }
         });
 
@@ -45,7 +45,7 @@ public class MainActivity extends GenericActivity {
         memorisationB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                voiceOut.speak("Mode mémorisation. Choisissez un trajet ou créez en un");
+                voiceOut.speak("Mode mémorisation");
                 Intent intent = new Intent(MainActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);
             }
