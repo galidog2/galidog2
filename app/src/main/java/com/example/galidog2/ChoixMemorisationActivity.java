@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -42,6 +43,8 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         voiceOut = new VoiceOut(this);
         // Utilisation du RecyclerView
         recyclerView = findViewById(R.id.recycler_view);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         cb_supprimer = findViewById(R.id.cb_supprimer);
         ArrayList<String> listeVide = new ArrayList<>();

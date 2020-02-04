@@ -9,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 
 import org.osmdroid.config.Configuration;
@@ -25,6 +26,8 @@ public class MainActivity extends GenericActivity {
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // On rend les boutons non cliquables (modes non pris en charge par Galidog2)
         findViewById(R.id.navigation).setEnabled(false);
