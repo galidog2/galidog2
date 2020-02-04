@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -22,12 +23,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import Constants.Audictionary;
 import SyntheseVocale.VoiceOut;
 
 public class ChoixMemorisationActivity extends SpeechRecognizerActivity implements RecyclerViewAdapter.OnTrajetListener {
-
+    private VoiceOut voiceOut = null;
     private RecyclerViewAdapter adapter;
     ArrayList<String> listeFichiers = new ArrayList<>();
     private static final String TAG = "ChoixMemorisationActivity";
@@ -47,13 +47,11 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choix_memorisation);
-
-        //speaker
-        voiceOut = new VoiceOut(getApplicationContext());
-
+        voiceOut = new VoiceOut(this);
         // Utilisation du RecyclerView
         recyclerView = findViewById(R.id.recycler_view);
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         cb_supprimer = findViewById(R.id.cb_supprimer);
         ArrayList<String> listeVide = new ArrayList<>();
         // Création de l'adapter qui va organiser les ItemHolders
@@ -128,6 +126,7 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
         supprimerTrajetDialogShown = true;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Voulez-vous supprimer le trajet " + listeFichiers.get(position) + " ?");
+        voiceOut.speak("Voulez-vous supprimer le trajet " + listeFichiers.get(position) + " ?");
         // Cet AlertDialog comporte un bouton pour valider…
         alertDialogBuilder.setPositiveButton("Supprimer", new DialogInterface.OnClickListener() {
             @Override
@@ -137,6 +136,7 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
                 Intent intent = new Intent(ChoixMemorisationActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);
                 supprimerTrajetDialogShown = false;
+                voiceOut.speak("Trajet supprimé");
             }
         });
         // … et un bouton pour annuler, qui arrête l'AlertDialog.
@@ -224,7 +224,6 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             }
         }
     }
-
     @Override
     public void doCommandeVocal(String command) {
         if (ajouterTrajetDialogShown)   //nomer trajet
@@ -261,12 +260,10 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
         else if (match.equals(Audictionary.matchsValiderAjouterTrajetDialog.get(0)))
             alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
     }
-
     /**
      * La méthode CreerAlertDialog crée une fenêtre où l'utisateur peut
      * rentrer le nom de la nouvelle liste.
      */
-
     private void CreerAlertDialog() {
         ajouterTrajetDialogShown = true;
         editText = new EditText(this);
@@ -275,17 +272,17 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Entrez le nom du trajet");
         alertDialogBuilder.setView(editText);
-
+        voiceOut.speak("Donnez le nom du trajet");//TODO: voiceIn
         // Cet AlertDialog comporte un bouton pour valider…
         alertDialogBuilder.setPositiveButton("Valider", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
                 Intent intent = new Intent(ChoixMemorisationActivity.this, AjoutTrajetActivity.class);
                 intent.putExtra("nouveaufichier", editText.getText().toString());
+                voiceOut.speak("Vous créez le trajet :" + editText.getText().toString());
                 startActivity(intent);
             }
         });
-
         // … et un bouton pour annuler, qui arrête l'AlertDialog.
         alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
             @Override
@@ -309,6 +306,7 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
         if (!cb_supprimer.isChecked()) {
             Intent intent = new Intent(ChoixMemorisationActivity.this, LectureActivity.class);
             intent.putExtra("nomfichier", listeFichiers.get(position));
+            voiceOut.speak("Vous suivez le trajet :" + listeFichiers.get(position));
             startActivity(intent);
         } else {
             alerteDialogSupprimer(position);

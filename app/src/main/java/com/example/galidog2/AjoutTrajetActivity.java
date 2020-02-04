@@ -3,6 +3,7 @@ package com.example.galidog2;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -50,7 +51,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import Constants.Audictionary;
@@ -59,11 +59,12 @@ import Constants.Audictionary;
  * Activité qui permet l'enregistrement d'un nouveau trajet
  */
 public class AjoutTrajetActivity extends SpeechRecognizerActivity implements MapEventsReceiver {
-
     private static final double rayon = 6371; // km
     /**
      * Attributs
      */
+    private VoiceOut voiceOut = null;
+    private boolean demarrerPosition = false;
     private CheckBox bouton_pause;
     private Button bouton_arret;
     private Button bouton_cercle;//Bouton pour dessiner un cercle
@@ -91,12 +92,13 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
     private static final String TAG = "AjoutTrajetActivity";
 
     private ArrayList<Double> distanceSup = new ArrayList<>();//Nécessaire pour le calcul
-    private ArrayList<Double> distance = new ArrayList<>();//A enregistrer
-    private ArrayList<Double> information = new ArrayList<>();//A enregistrer
+    private ArrayList<Double> distance = new ArrayList<>();
+    private ArrayList<Double> information = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        voiceOut = new VoiceOut(this);
         setContentView(R.layout.activity_ajout_trajet);
 
         //Garder l'écran allumé pour pouvoir enregistrer en continu
@@ -164,17 +166,22 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(android.location.Location location) {
-            if (!bouton_pause.isChecked()) {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                dernierPoint = new GeoPoint(latitude, longitude);
+            if (location.getAccuracy() > 15 && polyline.getPoints().size() == 0 && demarrerPosition == false) {
+                voiceOut.speak("Acquisition de la position, veuillez patienter");
 
-                polyline.addPoint(dernierPoint);
-                map.getOverlays().add(polyline);
-                map.getController().animateTo(dernierPoint);
+            } else {
+                if ((!bouton_pause.isChecked()) && demarrerPosition == true) {
+                    double latitude = location.getLatitude();
+                    double longitude = location.getLongitude();
+                    dernierPoint = new GeoPoint(latitude, longitude);
 
-                if (polyline.getPoints().size() == 1) {
-                    tracerMarqueur("Départ");
+                    polyline.addPoint(dernierPoint);
+                    map.getOverlays().add(polyline);
+                    map.getController().animateTo(dernierPoint);
+
+                    if (polyline.getPoints().size() == 1) {
+                        tracerMarqueur("Départ");
+                    }
                 }
             }
         }
@@ -198,8 +205,11 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
     private void checkIfLocalisation(Context context) {
         if (isLocationEnabled(context)) {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            //TODO:à vocaliser ?
             alertDialogBuilder.setTitle("Veuillez activer la localisation");
+            voiceOut.speak("Veuillez activer la localisation");
             alertDialogBuilder.setMessage("La localisation est nécessaire pour enregistrer un trajet").setCancelable(false);
+            voiceOut.speak("La localisation est nécessaire pour enregistrer un trajet");
             AlertDialog alertDialog = alertDialogBuilder.create();
             alertDialog.show();
             alertDialog.dismiss();
@@ -217,10 +227,12 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
             int mode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
                     Settings.Secure.LOCATION_MODE_OFF);
             return  (mode != Settings.Secure.LOCATION_MODE_OFF);
-
         }
     }
 
+    /**
+     * Fonction pour créer les cercles d'Eveil et de Validation
+     */
     private void createCircle(GeoPoint geoPoint) {
         //Cercle d'Eveil
         CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, nombreCercle);
@@ -460,7 +472,7 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
     /**
      * Demande des permissions au cas où
      */
-    private void demandePermissionsLocalisation(){
+    private void demandePermissionsLocalisation() {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -543,7 +555,8 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
 
         File localFile = cheminStockage(nomFichier + ".kml");
         kmlDocument.saveAsKML(localFile);
-//        Toast.makeText(AjoutTrajetActivity.this, "Enregistré", Toast.LENGTH_SHORT).show();
+        voiceOut.speak("Construction du trajet terminée, trajet enregistré");
+//        Toast.makeText(AjoutTrajetActivity.this, "Trajet enregistré", Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -586,25 +599,43 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
      * Message demandant la confirmation avant de commencer l'enregistrement
      * La localisation doit etre activée dans les paramètres ...
      */
-    FloatingActionButton btnPlay;
     private void AlertDialogDemarrer() {
-        final LayoutInflater layoutInflater = LayoutInflater.from(this);
-        View promptView = layoutInflater.inflate(R.layout.prompt, null);
 
-        final AlertDialog alertD = new AlertDialog.Builder(this).create();
-
-        btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
-
-        btnPlay.setOnClickListener(new View.OnClickListener() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Appuyez sur 'Démarrer' lorsque vous êtes prêt");
+        alertDialogBuilder.setPositiveButton("Démarrer", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                alertD.dismiss();
+            public void onClick(DialogInterface arg0, int arg1) {
+                demarrerPosition = true;
             }
         });
+        alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(AjoutTrajetActivity.this, ChoixMemorisationActivity.class);
+                startActivity(intent);
+            }
+        });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
 
-        alertD.setView(promptView);
-
-        alertD.show();
+//        final LayoutInflater layoutInflater = LayoutInflater.from(this);
+//        View promptView = layoutInflater.inflate(R.layout.prompt, null);
+//
+//        final AlertDialog alertD = new AlertDialog.Builder(this).create();
+//
+//        FloatingActionButton btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
+//
+//        btnPlay.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                alertD.dismiss();
+//            }
+//        });
+//
+//        alertD.setView(promptView);
+//
+//        alertD.show();
     }
 
     @Override
@@ -635,5 +666,4 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
         else if (Audictionary.matchsCercletTrajet.get(0).equalsIgnoreCase(match))
             bouton_cercle.callOnClick();
     }
-
 }

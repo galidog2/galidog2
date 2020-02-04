@@ -9,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 
 import androidx.appcompat.widget.Toolbar;
@@ -28,27 +29,34 @@ public class MainActivity extends SpeechRecognizerActivity {
         Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(this));
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        voiceOut = new VoiceOut(this.getApplicationContext());
-
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // On rend les boutons non cliquables (modes non pris en charge par Galidog2)
         findViewById(R.id.navigation).setEnabled(false);
         findViewById(R.id.description).setEnabled(false);
 
 
+        //Test Voix
+        final VoiceOut voiceOut = new VoiceOut(this);
+        Button bt_speak = findViewById(R.id.bt_speak);
+        bt_speak.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                voiceOut.speak("Wouf, wouf ! Bienvenue dans l'application Galidog. Choisissez un mode.");
+            }
+        });
+
         memorisationButton = (Button)findViewById(R.id.mémorisation);
         memorisationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                voiceOut.speak(Audictionary.SPEAK_ENTRER_MODE_MEMORISATION);
+                voiceOut.speak("Mode mémorisation");
                 Intent intent = new Intent(MainActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);
             }
         });
-
     }
 
     @Override
@@ -71,13 +79,13 @@ public class MainActivity extends SpeechRecognizerActivity {
 
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item){
-        //audioModeStart();
-        SharedPreferences sharedpreferences = getSharedPreferences("Mode",Context.MODE_PRIVATE);
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        audioModeStart();
+        SharedPreferences sharedpreferences = getSharedPreferences("Mode", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedpreferences.edit();
         editor.putString("audio", "true");
         editor.apply();
         return true;
     }
-
 }

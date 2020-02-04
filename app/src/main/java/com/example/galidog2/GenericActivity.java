@@ -1,5 +1,6 @@
 package com.example.galidog2;
 
+import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
@@ -8,9 +9,7 @@ import android.os.PowerManager;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 public class GenericActivity extends AppCompatActivity  {
 
     @Override

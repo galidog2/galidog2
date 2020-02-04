@@ -20,16 +20,15 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
@@ -53,6 +52,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -60,14 +60,12 @@ import androidx.core.content.ContextCompat;
 import Constants.Audictionary;
 import SyntheseVocale.VoiceOut;
 
-
 /**
  * Activity générant la carte pour se diriger
  */
 public class LectureActivity extends SpeechRecognizerActivity implements MapEventsReceiver {
-
     private static final String TAG = "LectureActivity";
-
+    private VoiceOut voiceOut = null;
     private Toast toast;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
@@ -102,7 +100,7 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-
+        voiceOut = new VoiceOut(this);
         //nécessaire pour osmdroid :
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
@@ -115,31 +113,28 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
 
         //initialisation du toast :
         toast = Toast.makeText(getApplicationContext(),"",Toast.LENGTH_SHORT);
-
         //vérification que la localisation a été activée :
         checkIfLocalisation(this);
-
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         bt_check = findViewById(R.id.bt_check);
         switchMyLocation.setChecked(true);
-      
+
         miseEnPlaceCarte();
 
         List<Overlay> overlays = kmlOverlay.getItems();
         trajet = new Polyline();
         int i;
-        for (i= 0 ; i<overlays.size(); i++)
-        {
-            if(overlays.get(i) instanceof Polyline){
-                trajet = (Polyline)overlays.get(i);
+        for (i = 0; i < overlays.size(); i++) {
+            if (overlays.get(i) instanceof Polyline) {
+                trajet = (Polyline) overlays.get(i);
             }
-            if (overlays.get(i) instanceof Marker){
-                Marker marker = (Marker)overlays.get(i);
-                if (marker.getTitle().equals("Départ")){
+            if (overlays.get(i) instanceof Marker) {
+                Marker marker = (Marker) overlays.get(i);
+                if (marker.getTitle().equals("Départ")) {
                     depart = marker;
-                }
-                else{
+                } else {
                     indications.add(marker);
                 }
             }
@@ -159,14 +154,14 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
         recupererFichier();
 
         tracerCercle();
-        map.getOverlays().set(map.getOverlays().size()-1,myLocationNewOverlay); //Localisation par dessus les cercles
-
+        map.getOverlays().set(map.getOverlays().size() - 1, myLocationNewOverlay); //Localisation par dessus les cercles
         bt_check.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (nombreCercle < listCircleValidation.size()) {
                     CheckCircleEveil(myLocationNewOverlay.getMyLocation(), nombreCercle);
                     CheckCircleValidation(myLocationNewOverlay.getMyLocation(), nombreCercle);
+                    map.getOverlays().set(map.getOverlays().size() - 1, myLocationNewOverlay);
                 }
             }
         });
@@ -204,13 +199,13 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
 
     private void createCircle(GeoPoint geoPoint) {
         //Cercle d'Eveil
-        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, listCircleEveil.size()+nombreCercle);
+        CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, listCircleEveil.size() + nombreCercle);
         cercle_eveil.drawCircle(map, Color.RED);
         listCircleEveil.add(cercle_eveil);
-        map.getOverlays().add(cercle_eveil);
+        map.getOverlays().add(0, cercle_eveil);
 
         //Cercle de Validation
-        CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(geoPoint, 3, listCircleValidation.size()+nombreCercle);
+        CirclePlottingOverlay cercle_validation = new CirclePlottingOverlay(geoPoint, 3, listCircleValidation.size() + nombreCercle);
         cercle_validation.drawCircle(map, Color.RED);
         listCircleValidation.add(cercle_validation);
         map.getOverlays().add(cercle_validation);
@@ -223,11 +218,15 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
     //Fonction pour changer la couleur du cercle d'Eveil
     private void ModifColorEveil(int n) {
         listCircleEveil.get(n).changeColor(map, Color.GREEN);
+        map.getOverlays().set(0, listCircleEveil.get(n));
+//        map.getOverlays().set(map.getOverlays().size() - 1, myLocationNewOverlay);
     }
 
     //Fonction pour changer la couleur du cercle de validation
     private void ModifColorValidation(int n) {
         listCircleValidation.get(n).changeColor(map, Color.GREEN);
+        map.getOverlays().set(1, listCircleValidation.get(n));
+//        map.getOverlays().set(map.getOverlays().size() - 1, myLocationNewOverlay);
     }
 
     //On check si on est dans le cercle d'éveil du point numéro n
@@ -252,11 +251,10 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
                 nombreCercle += 1;
             }
         }
-
     }
 
     private void checkIfLocalisation(final Context context) {
-        LocationManager lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
+        LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         boolean gps_enabled = false;
         boolean network_enabled = false;
 
@@ -278,11 +276,11 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
                             context.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                         }
                     })
-                    .setNegativeButton("Annuler",null).show();
+                    .setNegativeButton("Annuler", null).show();
         }
     }
 
-    private void setLocalisationManager(){
+    private void setLocalisationManager() {
         int minTime = 4000;
         int minDistance = 4;
 
@@ -308,60 +306,68 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
 
             GeoPoint locationGeo = new GeoPoint(location.getLatitude(), location.getLongitude());
 
-            if (accuracyMeters>distanceEveilMeters+distanceTrajetMeters){
-                toast.setText("Acquisition de la position en cours.");
-                toast.show();
+            if (accuracyMeters > distanceEveilMeters + distanceTrajetMeters) {
+                voiceOut.speak("Acquisition de la position en cours.");
+//                toast.setText("Acquisition de la position en cours.");
+//                toast.show();
                 return;
             }
 
-            if(!onGoing) {
+            if (!onGoing) {
+                voiceOut.speak("Vous suivez le trajet :" + nomFichier);
                 double distance = depart.getPosition().distanceToAsDouble(locationGeo);
-                if(distance<accuracyMeters){
+                if (distance < accuracyMeters) {
                     onGoing = true;
-                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet.");
-                    toast.show();
+                    voiceOut.speak("Vous êtes sur le point de départ. Démarrage du trajet." + depart.getSnippet());
+//                    toast.setText("Vous êtes sur le point de départ. Démarrage du trajet." + depart.getSnippet());
+//                    toast.show();
+                    ModifColorValidation(compteur);
+                } else {
+                    voiceOut.speak("Placez-vous sur le point de départ s'il vous plaît.");
+//                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
+//                    toast.show();
+                    ModifColorEveil(compteur);
                 }
-
-                else{
-                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
-                    toast.show();
-                }
-            }
-
-            else{
-                if(!trajet.isCloseTo(locationGeo,accuracyPixels+distanceTrajetPixels, map)){
-                    toast.setText("Revenez sur vos pas, vous vous éloignez du trajet.");
-                    toast.show();
-                }
-                else{
+            } else {
+                if (!trajet.isCloseTo(locationGeo, accuracyPixels + distanceTrajetPixels, map)) {
+                    voiceOut.speak("Revenez sur vos pas, vous vous éloignez du trajet.");
+//                    toast.setText("Revenez sur vos pas, vous vous éloignez du trajet.");
+//                    toast.show();
+                } else {
                     double distance = indications.get(compteur).getPosition().distanceToAsDouble(locationGeo);
 
-                    if (distance<accuracyMeters+distanceEveilMeters){
+                    if (distance < accuracyMeters + 6) {
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
-                            toast.setText("Vous arrivez dans 20m !");
-                            toast.show();
+                            voiceOut.speak("Vous arrivez dans 20 mètres !");
+//                            toast.setText("Vous arrivez dans 20m !");
+//                            toast.show();
+                            ModifColorEveil(compteur + 1);
                         }
-                        if (!displayedBefore){
-                            toast.setText("Éveil du " + indications.get(compteur).getTitle());
-                            toast.show();
+                        if (!displayedBefore) {
+                            voiceOut.speak("Éveil du " + indications.get(compteur).getTitle());
+//                            toast.setText("Éveil du " + indications.get(compteur).getTitle());
+//                            toast.show();
+                            ModifColorEveil(compteur + 1);
                             displayedBefore = true;
                         }
                     }
-                    if (distance<accuracyMeters+5){
+                    if (distance < accuracyMeters + 2) {
                         if (indications.get(compteur).getTitle().equals("Arrivée")) {
-                            toast.setText("Vous êtes arrivés !");
-                            toast.show();
-                        }
-                        else{
-                            toast.setText(indications.get(compteur).getTitle());
-                            toast.show();
+                            voiceOut.speak("Vous êtes arrivés !");
+//                            toast.setText("Vous êtes arrivés !");
+//                            toast.show();
+                            ModifColorValidation(compteur + 1);
+                        } else {
+                            voiceOut.speak(" "+indications.get(compteur).getSnippet());
+//                            toast.setText(indications.get(compteur).getSnippet());
+//                            toast.show();
+                            ModifColorValidation(compteur + 1);
                             compteur++;
                             displayedBefore = false;
                         }
                     }
                 }
             }
-
         }
 
         @Override
@@ -436,7 +442,7 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
      */
     private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
         KmlDocument kmlToRead = new KmlDocument();
-        String path = Environment.getExternalStorageDirectory().toString()+ "/osmdroid/kml/"+nomFichier+".kml";
+        String path = Environment.getExternalStorageDirectory().toString() + "/osmdroid/kml/" + nomFichier + ".kml";
         File fichier = new File(path);
         kmlToRead.parseKMLFile(fichier);
         kmlOverlay = (FolderOverlay) kmlToRead.mKmlRoot.buildOverlay(map, null, null, kmlToRead);
@@ -517,7 +523,6 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
         return false;
     }
 
-
     @Override
     public void doCommandeVocal(String command) {
 
@@ -530,5 +535,4 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
         else if (Audictionary.matchsCheckTrajet.get(0).equalsIgnoreCase(match))
             bt_check.callOnClick();
     }
-
 }
