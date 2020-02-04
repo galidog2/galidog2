@@ -323,7 +323,7 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
 //                    toast.show();
                     ModifColorValidation(compteur);
                 } else {
-                    voiceOut.speak("Placez-vous sur le point de départ s'il vous plaît.");
+                    voiceOut.speak("Placez-vous sur le point de départ.");
 //                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
 //                    toast.show();
                     ModifColorEveil(compteur);
@@ -357,6 +357,8 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
 //                            toast.setText("Vous êtes arrivés !");
 //                            toast.show();
                             ModifColorValidation(compteur + 1);
+                            Intent intent = new Intent(LectureActivity.this, MainActivity.class);
+                            startActivity(intent);
                         } else {
                             voiceOut.speak(" "+indications.get(compteur).getSnippet());
 //                            toast.setText(indications.get(compteur).getSnippet());
