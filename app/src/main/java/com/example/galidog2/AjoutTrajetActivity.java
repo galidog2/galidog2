@@ -659,7 +659,9 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
         if (Audictionary.matchsPlayTrajet.get(0).equalsIgnoreCase(match))
             alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
         else if (Audictionary.matchsPauseTrajet.get(0).equalsIgnoreCase(match))
-            bouton_pause.setChecked(!bouton_pause.isChecked());
+            bouton_pause.setChecked(true);
+        else if (Audictionary.matchsReprendreTrajet.get(0).equalsIgnoreCase(match))
+            bouton_pause.setChecked(false);
         else if (Audictionary.matchsArretTrajet.get(0).equalsIgnoreCase(match))
             bouton_arret.callOnClick();
         else if (Audictionary.matchsSuivreTrajet.get(0).equalsIgnoreCase(match))

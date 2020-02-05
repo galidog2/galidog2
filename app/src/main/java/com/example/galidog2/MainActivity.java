@@ -22,6 +22,7 @@ import SyntheseVocale.VoiceOut;
 public class MainActivity extends SpeechRecognizerActivity {
 
     Button memorisationButton;
+    private static boolean annonce =false;
     VoiceOut voiceOut;
 
     @Override
@@ -39,14 +40,7 @@ public class MainActivity extends SpeechRecognizerActivity {
 
 
         //Test Voix
-        final VoiceOut voiceOut = new VoiceOut(this);
-        Button bt_speak = findViewById(R.id.bt_speak);
-        bt_speak.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                voiceOut.speak("Wouf, wouf ! Bienvenue dans l'application Galidog. Choisissez un mode.");
-            }
-        });
+        voiceOut = new VoiceOut(this);
 
         memorisationButton = (Button)findViewById(R.id.mémorisation);
         memorisationButton.setOnClickListener(new View.OnClickListener() {
@@ -57,6 +51,15 @@ public class MainActivity extends SpeechRecognizerActivity {
                 startActivity(intent);
             }
         });
+
+        accueil();
+    }
+
+    private void accueil() {
+        if(!annonce){
+            voiceOut.speak("Bienvenue dans l'application Galidog. Choisissez un mode.");
+            annonce = true;
+        }
     }
 
     @Override

@@ -17,19 +17,20 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.io.File;
 import java.util.ArrayList;
 
+import Constants.Audictionary;
+import SyntheseVocale.VoiceOut;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import Constants.Audictionary;
-import SyntheseVocale.VoiceOut;
 
 public class ChoixMemorisationActivity extends SpeechRecognizerActivity implements RecyclerViewAdapter.OnTrajetListener {
     private VoiceOut voiceOut = null;
     private RecyclerViewAdapter adapter;
     ArrayList<String> listeFichiers = new ArrayList<>();
+    private String nomTrajets = "";
     private static final String TAG = "ChoixMemorisationActivity";
     private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 2;
@@ -97,7 +98,7 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
                 nomFichier = file.getName().substring(0, file.getName().lastIndexOf('.'));
                 listeFichiers.add(nomFichier);
                 voiceOut.speak(nomFichier);
-
+                nomTrajets += nomFichier + ", ";
             }
         return listeFichiers;
     }
@@ -223,13 +224,14 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             }
         }
     }
+
     @Override
     public void doCommandeVocal(String command) {
-        if (ajouterTrajetDialogShown)   //nomer trajet
+        if (ajouterTrajetDialogShown)   //nommer trajet
             editText.setText(command);
         else {          //sélection d'un trajet. Command = Nom du trajet demmandé, peut-être (on verifie)
             if (!listeFichiers.isEmpty())
-                for (int i=0; i < listeFichiers.size(); i++)
+                for (int i = 0; i < listeFichiers.size(); i++)
                     if (listeFichiers.get(i).equalsIgnoreCase(command)) //nom du trajet était dit, du coup on le demarre
                         onTrajetClick(i);
         }
@@ -237,28 +239,29 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
 
     @Override
     public void doMatch(String match) {
-        if (match.equals(Audictionary.matchsAccueil.get(0))){
+        if (match.equals(Audictionary.matchsAccueil.get(0))) {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
-        }
-        else if (match.equals(Audictionary.matchsAjouterTrajet.get(0)))
+        } else if (match.equals(Audictionary.matchsAjouterTrajet.get(0)))
             floatingActionButton.callOnClick();
         else if (match.equals(Audictionary.matchsSupprimerTrajet.get(0))) { //"Supprimer appellé"
             if (supprimerTrajetDialogShown)
                 alertDialogSupprimer.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
             else
                 cb_supprimer.setChecked(!cb_supprimer.isChecked());
-        }
-        else if (match.equals(Audictionary.matchsAnnulerDialog.get(0))) {
+        } else if (match.equals(Audictionary.matchsAnnulerDialog.get(0))) {
             if (supprimerTrajetDialogShown)
                 alertDialogSupprimer.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
             else if (ajouterTrajetDialogShown)
                 alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
-        }
-        else if (match.equals(Audictionary.matchsValiderAjouterTrajetDialog.get(0)))
+        } else if (match.equals(Audictionary.matchsValiderAjouterTrajetDialog.get(0)))
             alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
+        else if (match.equals(Audictionary.matchsDireTrajet.get(0))) {
+            voiceOut.speak("Vos trajets sont :" + nomTrajets);
+        }
     }
+
     /**
      * La méthode CreerAlertDialog crée une fenêtre où l'utisateur peut
      * rentrer le nom de la nouvelle liste.
