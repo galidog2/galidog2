@@ -18,10 +18,13 @@ public final class Audictionary {
     public static final List<String> matchsMemorisation = Collections.unmodifiableList(Arrays.asList("mémorisation", "mémoriser"));
     public static final List<String> matchsAnnonce= Collections.unmodifiableList(Arrays.asList("bonjour", "indication"));
     public static final List<String> matchsModeNonDispo= Collections.unmodifiableList(Arrays.asList("description", "navigation"));
+    public static final List<String> matchsEcran= Collections.unmodifiableList(Arrays.asList("écran"));
+
     //MEMORISATION
     public static final List<String> matchsAccueil = Collections.unmodifiableList(Arrays.asList("accueil", "home", "menu", "retour"));
+    public static final List<String> matchsAccueilDialog = Collections.unmodifiableList(Arrays.asList("oui", "valider"));
     public static final List<String> matchsAjouterTrajet = Collections.unmodifiableList(Arrays.asList("ajouter trajet", "ajouter", "trajet", "nouveau trajet", "nouvelle route", "nouveau"));
-    public static final List<String> matchsDireTrajet = Collections.unmodifiableList(Arrays.asList("écouter", "dire", "nombre"));
+    public static final List<String> matchsDireTrajet = Collections.unmodifiableList(Arrays.asList("écouter", "dire", "liste"));
     public static final List<String> matchsSupprimerTrajet = Collections.unmodifiableList(Arrays.asList("supprimer trajet", "supprimer", "enlever"));
     public static final List<String> matchsAnnulerDialog = Collections.unmodifiableList(Arrays.asList("annuler trajet", "annuler", "fermer", "annulé", "annule"));
     public static final List<String> matchsValiderAjouterTrajetDialog = Collections.unmodifiableList(Arrays.asList("valider trajet", "valider", "confirmer"));
@@ -40,6 +43,6 @@ public final class Audictionary {
             Collections.unmodifiableList(Arrays.asList(matchsMemorisation, matchsAccueil, matchsAjouterTrajet,
                     matchsSupprimerTrajet, matchsAnnulerDialog, matchsValiderAjouterTrajetDialog, matchsPlayTrajet, matchsPauseTrajet,
                     matchsArretTrajet, matchsSuivreTrajet, matchsCercletTrajet, matchsCheckTrajet,matchsReprendreTrajet,
-                    matchsDireTrajet,matchsAnnonce,matchsModeNonDispo));
+                    matchsDireTrajet,matchsAnnonce,matchsModeNonDispo,matchsAccueilDialog,matchsEcran));
 
 }

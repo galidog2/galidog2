@@ -50,9 +50,6 @@ public class MainActivity extends SpeechRecognizerActivity {
                 startActivity(intent);
             }
         });
-
-        voiceOut.speak("Bonjour");
-//        accueil();
     }
 
     private void accueil() {
@@ -75,6 +72,9 @@ public class MainActivity extends SpeechRecognizerActivity {
             voiceOut.speak("Bienvenue dans l'application Galidog. Choisissez un mode. Mode Mémorisation, mode description ou mode navigation");
         else if (match.equals(Audictionary.matchsModeNonDispo.get(0)))
             voiceOut.speak("Mode non disponible");
+        else if (match.equals(Audictionary.matchsEcran.get(0))) {
+            voiceOut.speak("Vous êtes sur l'écran d'accueil");
+        }
     }
 
     @Override

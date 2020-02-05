@@ -668,5 +668,8 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
             switchMyLocation.setChecked(!switchMyLocation.isChecked());
         else if (Audictionary.matchsCercletTrajet.get(0).equalsIgnoreCase(match))
             bouton_cercle.callOnClick();
+        else if (match.equals(Audictionary.matchsEcran.get(0))) {
+            voiceOut.speak("Vous êtes en cours d'ajout de trajet");
+        }
     }
 }

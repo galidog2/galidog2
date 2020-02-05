@@ -243,6 +243,7 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
+            voiceOut.speak("Accueil");
         } else if (match.equals(Audictionary.matchsAjouterTrajet.get(0)))
             floatingActionButton.callOnClick();
         else if (match.equals(Audictionary.matchsSupprimerTrajet.get(0))) { //"Supprimer appellé"
@@ -259,6 +260,8 @@ public class ChoixMemorisationActivity extends SpeechRecognizerActivity implemen
             alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
         else if (match.equals(Audictionary.matchsDireTrajet.get(0))) {
             voiceOut.speak("Vos trajets sont :" + nomTrajets);
+        }else if (match.equals(Audictionary.matchsEcran.get(0))) {
+            voiceOut.speak("Vous êtes dans le mode mémorisation");
         }
     }
 

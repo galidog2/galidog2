@@ -8,12 +8,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -25,12 +23,8 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+
 import org.osmdroid.api.IGeoPoint;
-import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
@@ -52,13 +46,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import Constants.Audictionary;
 import SyntheseVocale.VoiceOut;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 /**
  * Activity générant la carte pour se diriger
@@ -74,6 +66,9 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
 
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
+
+    private AlertDialog alertDialogAccueil;
+    private boolean retourAccueilDialogShown = false;
 
     private String nomFichier;
     private FolderOverlay kmlOverlay;
@@ -94,7 +89,7 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
     private boolean onGoing = false;
     private int distanceEveilMeters = 10;
     private int distanceTrajetMeters = 5;
-    private int compteur=0;
+    private int compteur = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -106,13 +101,13 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
         //récupération du nom du trajet :
-        if (getIntent().hasExtra("nomfichier")){
+        if (getIntent().hasExtra("nomfichier")) {
             nomFichier = getIntent().getStringExtra("nomfichier");
-            Log.i("PMR",nomFichier);
+            Log.i("PMR", nomFichier);
         }
 
         //initialisation du toast :
-        toast = Toast.makeText(getApplicationContext(),"",Toast.LENGTH_SHORT);
+        toast = Toast.makeText(getApplicationContext(), "", Toast.LENGTH_SHORT);
         //vérification que la localisation a été activée :
         checkIfLocalisation(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -260,13 +255,15 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
 
         try {
             gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        } catch(Exception ex) {}
+        } catch (Exception ex) {
+        }
 
         try {
             network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        } catch(Exception ex) {}
+        } catch (Exception ex) {
+        }
 
-        if(!gps_enabled && !network_enabled) {
+        if (!gps_enabled && !network_enabled) {
             // notify user
             new AlertDialog.Builder(context)
                     .setMessage("Veuillez activer la localisation pour démarrer le guidage.")
@@ -360,7 +357,7 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
                             Intent intent = new Intent(LectureActivity.this, MainActivity.class);
                             startActivity(intent);
                         } else {
-                            voiceOut.speak(" "+indications.get(compteur).getSnippet());
+                            voiceOut.speak(" " + indications.get(compteur).getSnippet());
 //                            toast.setText(indications.get(compteur).getSnippet());
 //                            toast.show();
                             ModifColorValidation(compteur + 1);
@@ -440,6 +437,7 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
 
     /**
      * Méthode pour afficher un trajet
+     *
      * @param overlays la liste des overlays
      */
     private void miseEnPlaceKmlOverlay(List<Overlay> overlays) {
@@ -496,6 +494,31 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
         map.onPause();  //needed for compass, my location overlays, v6.0.0 and up
     }
 
+    private void alerteDialogAccueil() {
+        retourAccueilDialogShown = true;
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Voulez-vous retourner à l'accueil ? Le trajet sera interrompu définitivement");
+        voiceOut.speak("Voulez-vous retourner à l'accueil ? Le trajet sera interrompu définitivement");
+        alertDialogBuilder.setPositiveButton("Accueil", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface arg0, int arg1) {
+                Intent intent = new Intent(LectureActivity.this, MainActivity.class);
+                startActivity(intent);
+                retourAccueilDialogShown = false;
+                voiceOut.speak("Accueil");
+            }
+        });
+        alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+                retourAccueilDialogShown = false;
+            }
+        });
+        alertDialogAccueil = alertDialogBuilder.create();
+        alertDialogAccueil.show();
+    }
+
     /**
      * Permet de récupérer un bitmap à partir d'un drawable.
      * Sert à convertir l'icon pour placer l'utilisateur
@@ -536,5 +559,17 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
             switchMyLocation.setChecked(!switchMyLocation.isChecked());
         else if (Audictionary.matchsCheckTrajet.get(0).equalsIgnoreCase(match))
             bt_check.callOnClick();
+        else if (match.equals(Audictionary.matchsAccueil.get(0))) {
+            if (!retourAccueilDialogShown)
+                alerteDialogAccueil();
+        } else if (match.equals(Audictionary.matchsAccueilDialog.get(0))) {
+            if (retourAccueilDialogShown)
+                alertDialogAccueil.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
+        } else if (match.equals(Audictionary.matchsAnnulerDialog.get(0))) {
+            if (retourAccueilDialogShown)
+                alertDialogAccueil.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
+        } else if (match.equals(Audictionary.matchsEcran.get(0))) {
+            voiceOut.speak("Vous êtes en cours de lecture de trajet");
+        }
     }
 }
