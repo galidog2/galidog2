@@ -12,17 +12,16 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 
-import androidx.appcompat.widget.Toolbar;
-
 import org.osmdroid.config.Configuration;
 
 import Constants.Audictionary;
 import SyntheseVocale.VoiceOut;
+import androidx.appcompat.widget.Toolbar;
 
 public class MainActivity extends SpeechRecognizerActivity {
 
     Button memorisationButton;
-    private static boolean annonce =false;
+    private static boolean annonce = false;
     VoiceOut voiceOut;
 
     @Override
@@ -42,7 +41,7 @@ public class MainActivity extends SpeechRecognizerActivity {
         //Test Voix
         voiceOut = new VoiceOut(this);
 
-        memorisationButton = (Button)findViewById(R.id.mémorisation);
+        memorisationButton = (Button) findViewById(R.id.mémorisation);
         memorisationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -52,11 +51,12 @@ public class MainActivity extends SpeechRecognizerActivity {
             }
         });
 
-        accueil();
+        voiceOut.speak("Bonjour");
+//        accueil();
     }
 
     private void accueil() {
-        if(!annonce){
+        if (!annonce) {
             voiceOut.speak("Bienvenue dans l'application Galidog. Choisissez un mode.");
             annonce = true;
         }
@@ -64,13 +64,17 @@ public class MainActivity extends SpeechRecognizerActivity {
 
     @Override
     public void doCommandeVocal(String command) {
-
+        accueil();
     }
 
     @Override
     public void doMatch(String match) {
         if (match.equals(Audictionary.matchsMemorisation.get(0)))
             memorisationButton.callOnClick();
+        else if (match.equals(Audictionary.matchsAnnonce.get(0)))
+            voiceOut.speak("Bienvenue dans l'application Galidog. Choisissez un mode. Mode Mémorisation, mode description ou mode navigation");
+        else if (match.equals(Audictionary.matchsModeNonDispo.get(0)))
+            voiceOut.speak("Mode non disponible");
     }
 
     @Override

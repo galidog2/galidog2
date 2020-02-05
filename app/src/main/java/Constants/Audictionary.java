@@ -16,6 +16,8 @@ public final class Audictionary {
 
     //HOME
     public static final List<String> matchsMemorisation = Collections.unmodifiableList(Arrays.asList("mémorisation", "mémoriser"));
+    public static final List<String> matchsAnnonce= Collections.unmodifiableList(Arrays.asList("bonjour", "indication"));
+    public static final List<String> matchsModeNonDispo= Collections.unmodifiableList(Arrays.asList("description", "navigation"));
     //MEMORISATION
     public static final List<String> matchsAccueil = Collections.unmodifiableList(Arrays.asList("accueil", "home", "menu", "retour"));
     public static final List<String> matchsAjouterTrajet = Collections.unmodifiableList(Arrays.asList("ajouter trajet", "ajouter", "trajet", "nouveau trajet", "nouvelle route", "nouveau"));
@@ -38,6 +40,6 @@ public final class Audictionary {
             Collections.unmodifiableList(Arrays.asList(matchsMemorisation, matchsAccueil, matchsAjouterTrajet,
                     matchsSupprimerTrajet, matchsAnnulerDialog, matchsValiderAjouterTrajetDialog, matchsPlayTrajet, matchsPauseTrajet,
                     matchsArretTrajet, matchsSuivreTrajet, matchsCercletTrajet, matchsCheckTrajet,matchsReprendreTrajet,
-                    matchsDireTrajet));
+                    matchsDireTrajet,matchsAnnonce,matchsModeNonDispo));
 
 }
