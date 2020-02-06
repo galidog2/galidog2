@@ -365,18 +365,18 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
         construction();//On calcule les infos de distance et d'orientation
         for (int i = 0; i < listeMarqueurs.size(); i++) {
             if (i == 0 && listeMarqueurs.size() <= 2) { //Distance + prochaine orientation
-                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i)
+                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i).intValue()
                         + " mètres");
             } else if (i == 0) { //Distance + prochaine orientation
-                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i)
-                        + " mètres, puis tournez à " + information.get(i) + " heures");
+                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i).intValue()
+                        + " mètres, puis tournez à " + information.get(i).intValue() + " heures");
             } else if (i < listeMarqueurs.size() - 2) {
-                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1)
-                        + "heures, marchez sur " + distance.get(i)
-                        + " mètres, puis tournez à " + information.get(i) + " heures");
+                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1).intValue()
+                        + "heures, marchez sur " + distance.get(i).intValue()
+                        + " mètres, puis tournez à " + information.get(i).intValue() + " heures");
             } else if (i == listeMarqueurs.size() - 2) {
-                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1)
-                        + "heures, marchez sur " + distance.get(i));
+                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1).intValue()
+                        + "heures, marchez sur " + distance.get(i).intValue() + "mètres");
             } else if (i == listeMarqueurs.size() - 1) {
                 listeMarqueurs.get(i).setSnippet("Arrivée");
             }
