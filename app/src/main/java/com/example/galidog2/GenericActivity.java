@@ -1,7 +1,6 @@
 package com.example.galidog2;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
@@ -10,8 +9,8 @@ import android.os.PowerManager;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
-
-public class GenericActivity extends AppCompatActivity {
+import androidx.appcompat.app.AppCompatActivity;
+public class GenericActivity extends AppCompatActivity  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +40,5 @@ public class GenericActivity extends AppCompatActivity {
 
             }
         }.start();
-
     }
 }

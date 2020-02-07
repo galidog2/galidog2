@@ -17,6 +17,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.io.File;
 import java.util.ArrayList;
 
+import Constants.Audictionary;
+import SyntheseVocale.VoiceOut;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -24,28 +26,32 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class ChoixMemorisationActivity extends GenericActivity implements RecyclerViewAdapter.OnTrajetListener {
-
+public class ChoixMemorisationActivity extends SpeechRecognizerActivity implements RecyclerViewAdapter.OnTrajetListener {
     private VoiceOut voiceOut = null;
     private RecyclerViewAdapter adapter;
     ArrayList<String> listeFichiers = new ArrayList<>();
+    private String nomTrajets = "";
     private static final String TAG = "ChoixMemorisationActivity";
     private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 2;
     private CheckBox cb_supprimer;
     private RecyclerView recyclerView;
+    private FloatingActionButton floatingActionButton;
+    private EditText editText;
+    private AlertDialog alertDialog;
+    private AlertDialog alertDialogSupprimer;
+    private boolean ajouterTrajetDialogShown = false;
+    private boolean supprimerTrajetDialogShown = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choix_memorisation);
-
         voiceOut = new VoiceOut(this);
         // Utilisation du RecyclerView
         recyclerView = findViewById(R.id.recycler_view);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         cb_supprimer = findViewById(R.id.cb_supprimer);
         ArrayList<String> listeVide = new ArrayList<>();
         // Création de l'adapter qui va organiser les ItemHolders
@@ -62,7 +68,7 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         }
 
         // On crée le bouton flottant qui permet d'ajouter des listes
-        FloatingActionButton floatingActionButton = findViewById(R.id.fab);
+        floatingActionButton = findViewById(R.id.fab);
         // Les variables ont besoin d'être déclarées en final car on les utilise dans un cast local.
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -87,10 +93,13 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         File directory = new File(path);
         File[] files = directory.listFiles();
         String nomFichier;
-        for (File file : files) {
-            nomFichier = file.getName().substring(0, file.getName().lastIndexOf('.'));
-            listeFichiers.add(nomFichier);
-        }
+        if (files != null)
+            for (File file : files) {
+                nomFichier = file.getName().substring(0, file.getName().lastIndexOf('.'));
+                listeFichiers.add(nomFichier);
+                voiceOut.speak(nomFichier);
+                nomTrajets += nomFichier + ", ";
+            }
         return listeFichiers;
     }
 
@@ -112,9 +121,9 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
      * valider ou non la suppression du trajet.
      */
     private void alerteDialogSupprimer(final int position) {
-
         // Un AlertDialog fonctionne comme une «mini-activité».
         // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
+        supprimerTrajetDialogShown = true;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Voulez-vous supprimer le trajet " + listeFichiers.get(position) + " ?");
         voiceOut.speak("Voulez-vous supprimer le trajet " + listeFichiers.get(position) + " ?");
@@ -123,10 +132,11 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
                 supprimerTrajet(position);
-                voiceOut.speak("Trajet supprimé");
                 //On met à jour l'affichage
                 Intent intent = new Intent(ChoixMemorisationActivity.this, ChoixMemorisationActivity.class);
                 startActivity(intent);
+                supprimerTrajetDialogShown = false;
+                voiceOut.speak("Trajet supprimé");
             }
         });
         // … et un bouton pour annuler, qui arrête l'AlertDialog.
@@ -134,10 +144,11 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
+                supprimerTrajetDialogShown = false;
             }
         });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
+        alertDialogSupprimer = alertDialogBuilder.create();
+        alertDialogSupprimer.show();
     }
 
     /**
@@ -214,19 +225,59 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         }
     }
 
+    @Override
+    public void doCommandeVocal(String command) {
+        if (ajouterTrajetDialogShown)   //nommer trajet
+            editText.setText(command);
+        else {          //sélection d'un trajet. Command = Nom du trajet demmandé, peut-être (on verifie)
+            if (!listeFichiers.isEmpty())
+                for (int i = 0; i < listeFichiers.size(); i++)
+                    if (listeFichiers.get(i).equalsIgnoreCase(command)) //nom du trajet était dit, du coup on le demarre
+                        onTrajetClick(i);
+        }
+    }
+
+    @Override
+    public void doMatch(String match) {
+        if (match.equals(Audictionary.matchsAccueil.get(0))) {
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            voiceOut.speak("Accueil");
+        } else if (match.equals(Audictionary.matchsAjouterTrajet.get(0)))
+            floatingActionButton.callOnClick();
+        else if (match.equals(Audictionary.matchsSupprimerTrajet.get(0))) { //"Supprimer appellé"
+            if (supprimerTrajetDialogShown)
+                alertDialogSupprimer.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
+            else
+                cb_supprimer.setChecked(!cb_supprimer.isChecked());
+        } else if (match.equals(Audictionary.matchsAnnulerDialog.get(0))) {
+            if (supprimerTrajetDialogShown)
+                alertDialogSupprimer.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
+            else if (ajouterTrajetDialogShown)
+                alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
+        } else if (match.equals(Audictionary.matchsValiderAjouterTrajetDialog.get(0)))
+            alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
+        else if (match.equals(Audictionary.matchsDireTrajet.get(0))) {
+            voiceOut.speak("Vos trajets sont :" + nomTrajets);
+        }else if (match.equals(Audictionary.matchsEcran.get(0))) {
+            voiceOut.speak("Vous êtes dans le mode mémorisation");
+        }
+    }
+
     /**
      * La méthode CreerAlertDialog crée une fenêtre où l'utisateur peut
      * rentrer le nom de la nouvelle liste.
      */
     private void CreerAlertDialog() {
-
-        final EditText editText = new EditText(this);
+        ajouterTrajetDialogShown = true;
+        editText = new EditText(this);
         // Un AlertDialog fonctionne comme une «mini-activité».
         // Il demande à l'utisateur une valeur, la renvoie à l'activité et s'éteint.
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Entrez le nom du trajet");
-        voiceOut.speak("Donnez le nom du trajet");//TODO: voiceIn
         alertDialogBuilder.setView(editText);
+        voiceOut.speak("Donnez le nom du trajet");//TODO: voiceIn
         // Cet AlertDialog comporte un bouton pour valider…
         alertDialogBuilder.setPositiveButton("Valider", new DialogInterface.OnClickListener() {
             @Override
@@ -241,10 +292,11 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
         alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                ajouterTrajetDialogShown = false;
                 dialog.cancel();
             }
         });
-        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog = alertDialogBuilder.create();
         alertDialog.show();
     }
 
@@ -265,4 +317,5 @@ public class ChoixMemorisationActivity extends GenericActivity implements Recycl
             alerteDialogSupprimer(position);
         }
     }
+
 }

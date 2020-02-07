@@ -24,6 +24,7 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
@@ -45,21 +46,18 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import Constants.Audictionary;
+import SyntheseVocale.VoiceOut;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 
 /**
  * Activity générant la carte pour se diriger
  */
-public class LectureActivity extends AppCompatActivity implements MapEventsReceiver {
-
+public class LectureActivity extends SpeechRecognizerActivity implements MapEventsReceiver {
     private static final String TAG = "LectureActivity";
-
     private VoiceOut voiceOut = null;
-
     private Toast toast;
     MapView map = null; // La vue de la map
     private MyLocationNewOverlay myLocationNewOverlay;
@@ -69,9 +67,14 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     private int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION;
     private int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
 
+    private AlertDialog alertDialogAccueil;
+    private boolean retourAccueilDialogShown = false;
+
     private String nomFichier;
     private FolderOverlay kmlOverlay;
     private Polyline trajet;
+    //Liste des points à marquer
+    private List<IGeoPoint> points = new ArrayList<>(); //A supprimer avec AjoutMarqueurs
     private ArrayList<Marker> listeMarqueurs = new ArrayList<>();
 
     private ArrayList<CirclePlottingOverlay> listCircleEveil = new ArrayList<>();
@@ -92,9 +95,7 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-
         voiceOut = new VoiceOut(this);
-
         //nécessaire pour osmdroid :
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
@@ -107,12 +108,9 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
         //initialisation du toast :
         toast = Toast.makeText(getApplicationContext(), "", Toast.LENGTH_SHORT);
-
         //vérification que la localisation a été activée :
         checkIfLocalisation(this);
-
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         setContentView(R.layout.activity_map);
         switchMyLocation = findViewById(R.id.switchMyLocation);
         bt_check = findViewById(R.id.bt_check);
@@ -152,7 +150,6 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 
         tracerCercle();
         map.getOverlays().set(map.getOverlays().size() - 1, myLocationNewOverlay); //Localisation par dessus les cercles
-
         bt_check.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -323,10 +320,11 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 //                    toast.show();
                     ModifColorValidation(compteur);
                 } else {
-                    voiceOut.speak("Placez-vous sur le point de départ s'il vous plaît.");
+                    voiceOut.speak("Placez-vous sur le point de départ.");
 //                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
 //                    toast.show();
-                    ModifColorEveil(compteur);
+                    if (distance < accuracyMeters + 4)
+                        ModifColorEveil(compteur);
                 }
             } else {
                 if (!trajet.isCloseTo(locationGeo, accuracyPixels + distanceTrajetPixels, map)) {
@@ -357,8 +355,10 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
 //                            toast.setText("Vous êtes arrivés !");
 //                            toast.show();
                             ModifColorValidation(compteur + 1);
+                            Intent intent = new Intent(LectureActivity.this, MainActivity.class);
+                            startActivity(intent);
                         } else {
-                            voiceOut.speak(" "+indications.get(compteur).getSnippet());
+                            voiceOut.speak(" " + indications.get(compteur).getSnippet());
 //                            toast.setText(indications.get(compteur).getSnippet());
 //                            toast.show();
                             ModifColorValidation(compteur + 1);
@@ -495,6 +495,31 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
         map.onPause();  //needed for compass, my location overlays, v6.0.0 and up
     }
 
+    private void alerteDialogAccueil() {
+        retourAccueilDialogShown = true;
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Voulez-vous retourner à l'accueil ? Le trajet sera interrompu définitivement");
+        voiceOut.speak("Voulez-vous retourner à l'accueil ? Le trajet sera interrompu définitivement");
+        alertDialogBuilder.setPositiveButton("Valider", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface arg0, int arg1) {
+                Intent intent = new Intent(LectureActivity.this, MainActivity.class);
+                startActivity(intent);
+                retourAccueilDialogShown = false;
+                voiceOut.speak("Accueil");
+            }
+        });
+        alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+                retourAccueilDialogShown = false;
+            }
+        });
+        alertDialogAccueil = alertDialogBuilder.create();
+        alertDialogAccueil.show();
+    }
+
     /**
      * Permet de récupérer un bitmap à partir d'un drawable.
      * Sert à convertir l'icon pour placer l'utilisateur
@@ -522,5 +547,30 @@ public class LectureActivity extends AppCompatActivity implements MapEventsRecei
     @Override
     public boolean longPressHelper(GeoPoint p) {
         return false;
+    }
+
+    @Override
+    public void doCommandeVocal(String command) {
+
+    }
+
+    @Override
+    public void doMatch(String match) {
+        if (Audictionary.matchsSuivreTrajet.get(0).equalsIgnoreCase(match))
+            switchMyLocation.setChecked(!switchMyLocation.isChecked());
+        else if (Audictionary.matchsCheckTrajet.get(0).equalsIgnoreCase(match))
+            bt_check.callOnClick();
+        else if (match.equals(Audictionary.matchsAccueil.get(0))) {
+            if (!retourAccueilDialogShown)
+                alerteDialogAccueil();
+        } else if (match.equals(Audictionary.matchsAccueilDialog.get(0))) {
+            if (retourAccueilDialogShown)
+                alertDialogAccueil.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
+        } else if (match.equals(Audictionary.matchsAnnulerDialog.get(0))) {
+            if (retourAccueilDialogShown)
+                alertDialogAccueil.getButton(AlertDialog.BUTTON_NEGATIVE).callOnClick();
+        } else if (match.equals(Audictionary.matchsEcran.get(0))) {
+            voiceOut.speak("Vous êtes en cours de lecture de trajet");
+        }
     }
 }

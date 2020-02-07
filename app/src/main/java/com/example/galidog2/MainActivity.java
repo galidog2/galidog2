@@ -14,38 +14,35 @@ import android.widget.Button;
 
 import org.osmdroid.config.Configuration;
 
+import Constants.Audictionary;
+import SyntheseVocale.VoiceOut;
 import androidx.appcompat.widget.Toolbar;
 
-public class MainActivity extends GenericActivity {
+public class MainActivity extends SpeechRecognizerActivity {
+
+    Button memorisationButton;
+    private static boolean annonce = false;
+    VoiceOut voiceOut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(this));
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         // On rend les boutons non cliquables (modes non pris en charge par Galidog2)
         findViewById(R.id.navigation).setEnabled(false);
         findViewById(R.id.description).setEnabled(false);
 
 
         //Test Voix
-        final VoiceOut voiceOut = new VoiceOut(this);
-        Button bt_speak = findViewById(R.id.bt_speak);
-        bt_speak.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                voiceOut.speak("Wouf, wouf ! Bienvenue dans l'application Galidog. Choisissez un mode.");
-            }
-        });
+        voiceOut = new VoiceOut(this);
 
-        Button memorisationB = (Button) findViewById(R.id.mémorisation);
-        memorisationB.setOnClickListener(new View.OnClickListener() {
+        memorisationButton = (Button) findViewById(R.id.mémorisation);
+        memorisationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 voiceOut.speak("Mode mémorisation");
@@ -53,7 +50,31 @@ public class MainActivity extends GenericActivity {
                 startActivity(intent);
             }
         });
+    }
 
+    private void accueil() {
+        if (!annonce) {
+            voiceOut.speak("Bienvenue dans l'application Galidog. Choisissez un mode.");
+            annonce = true;
+        }
+    }
+
+    @Override
+    public void doCommandeVocal(String command) {
+        accueil();
+    }
+
+    @Override
+    public void doMatch(String match) {
+        if (match.equals(Audictionary.matchsMemorisation.get(0)))
+            memorisationButton.callOnClick();
+        else if (match.equals(Audictionary.matchsAnnonce.get(0)))
+            voiceOut.speak("Bienvenue dans l'application Galidog. Choisissez un mode. Mode Mémorisation, mode description ou mode navigation");
+        else if (match.equals(Audictionary.matchsModeNonDispo.get(0)))
+            voiceOut.speak("Mode non disponible");
+        else if (match.equals(Audictionary.matchsEcran.get(0))) {
+            voiceOut.speak("Vous êtes sur l'écran d'accueil");
+        }
     }
 
     @Override
@@ -65,6 +86,7 @@ public class MainActivity extends GenericActivity {
 
 
     @Override
+
     public boolean onOptionsItemSelected(MenuItem item) {
         audioModeStart();
         SharedPreferences sharedpreferences = getSharedPreferences("Mode", Context.MODE_PRIVATE);
@@ -73,5 +95,4 @@ public class MainActivity extends GenericActivity {
         editor.apply();
         return true;
     }
-
 }

@@ -17,6 +17,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -50,12 +51,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import Constants.Audictionary;
 
 /**
  * Activité qui permet l'enregistrement d'un nouveau trajet
  */
-public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsReceiver {
-
+public class AjoutTrajetActivity extends SpeechRecognizerActivity implements MapEventsReceiver {
     private static final double rayon = 6371; // km
     /**
      * Attributs
@@ -146,6 +149,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
                 Intent intent = new Intent(AjoutTrajetActivity.this, MainActivity.class);
                 startActivity(intent);
+                voiceOut.speak("Accueil");
             }
         });
 
@@ -212,7 +216,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         }
     }
 
-    public static Boolean isLocationEnabled(Context context) {
+    public static Boolean isLocationEnabled(Context context)
+    {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             // This is new method provided in API 28
             LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -221,15 +226,13 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             // This is Deprecated in API 28
             int mode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
                     Settings.Secure.LOCATION_MODE_OFF);
-            return (mode != Settings.Secure.LOCATION_MODE_OFF);
-
+            return  (mode != Settings.Secure.LOCATION_MODE_OFF);
         }
     }
 
     /**
      * Fonction pour créer les cercles d'Eveil et de Validation
      */
-
     private void createCircle(GeoPoint geoPoint) {
         //Cercle d'Eveil
         CirclePlottingOverlay cercle_eveil = new CirclePlottingOverlay(geoPoint, 8, nombreCercle);
@@ -362,18 +365,18 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
         construction();//On calcule les infos de distance et d'orientation
         for (int i = 0; i < listeMarqueurs.size(); i++) {
             if (i == 0 && listeMarqueurs.size() <= 2) { //Distance + prochaine orientation
-                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i)
+                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i).intValue()
                         + " mètres");
             } else if (i == 0) { //Distance + prochaine orientation
-                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i)
-                        + " mètres, puis tournez à " + information.get(i) + " heures");
+                listeMarqueurs.get(i).setSnippet("Marchez sur " + distance.get(i).intValue()
+                        + " mètres, puis tournez à " + information.get(i).intValue() + " heures");
             } else if (i < listeMarqueurs.size() - 2) {
-                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1)
-                        + "heures, marchez sur " + distance.get(i)
-                        + " mètres, puis tournez à " + information.get(i) + " heures");
+                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1).intValue()
+                        + "heures, marchez sur " + distance.get(i).intValue()
+                        + " mètres, puis tournez à " + information.get(i).intValue() + " heures");
             } else if (i == listeMarqueurs.size() - 2) {
-                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1)
-                        + "heures, marchez sur " + distance.get(i));
+                listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1).intValue()
+                        + " heures, marchez sur " + distance.get(i).intValue() + "mètres");
             } else if (i == listeMarqueurs.size() - 1) {
                 listeMarqueurs.get(i).setSnippet("Arrivée");
             }
@@ -399,6 +402,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
                 information.add(calculInformation(i));
             }
         }
+        Toast.makeText(this, "Construction réussie : " + distance.get(0), Toast.LENGTH_SHORT).show();//Marche pas ?
     }
 
     public double calculDistance(int i, int j) {
@@ -455,7 +459,8 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
 
     private void tracerMarqueur(String titre) {
         Marker marker = new Marker(map);
-        marker.setPosition(dernierPoint);
+        if (dernierPoint != null)
+            marker.setPosition(dernierPoint);
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         marker.setIcon(getDrawable(R.drawable.marqueur));
         marker.setSubDescription("Description possible");//TODO : Utiliser trouverAdresse() ici
@@ -594,6 +599,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
      * Message demandant la confirmation avant de commencer l'enregistrement
      * La localisation doit etre activée dans les paramètres ...
      */
+    AlertDialog alertDialog;
     private void AlertDialogDemarrer() {
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
@@ -602,6 +608,7 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
                 demarrerPosition = true;
+                voiceOut.speak("Début d'enregistrement");
             }
         });
         alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
@@ -611,28 +618,9 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
                 startActivity(intent);
             }
         });
-        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog = alertDialogBuilder.create();
         alertDialog.show();
-
-//        final LayoutInflater layoutInflater = LayoutInflater.from(this);
-//        View promptView = layoutInflater.inflate(R.layout.prompt, null);
-//
-//        final AlertDialog alertD = new AlertDialog.Builder(this).create();
-//
-//        FloatingActionButton btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
-//
-//        btnPlay.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                alertD.dismiss();
-//            }
-//        });
-//
-//        alertD.setView(promptView);
-//
-//        alertD.show();
     }
-
 
     @Override
     public boolean singleTapConfirmedHelper(GeoPoint p) {
@@ -643,5 +631,28 @@ public class AjoutTrajetActivity extends AppCompatActivity implements MapEventsR
     public boolean longPressHelper(GeoPoint p) {
         return false;
     }
-}
 
+    @Override
+    public void doCommandeVocal(String command) {
+        //rien à faire avec les commandes aleactoires
+    }
+
+    @Override
+    public void doMatch(String match) {
+        if (Audictionary.matchsPlayTrajet.get(0).equalsIgnoreCase(match))
+            alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).callOnClick();
+        else if (Audictionary.matchsPauseTrajet.get(0).equalsIgnoreCase(match))
+            bouton_pause.setChecked(true);
+        else if (Audictionary.matchsReprendreTrajet.get(0).equalsIgnoreCase(match))
+            bouton_pause.setChecked(false);
+        else if (Audictionary.matchsArretTrajet.get(0).equalsIgnoreCase(match))
+            bouton_arret.callOnClick();
+        else if (Audictionary.matchsSuivreTrajet.get(0).equalsIgnoreCase(match))
+            switchMyLocation.setChecked(!switchMyLocation.isChecked());
+        else if (Audictionary.matchsCercletTrajet.get(0).equalsIgnoreCase(match))
+            bouton_cercle.callOnClick();
+        else if (match.equals(Audictionary.matchsEcran.get(0))) {
+            voiceOut.speak("Vous êtes en cours d'ajout de trajet");
+        }
+    }
+}
