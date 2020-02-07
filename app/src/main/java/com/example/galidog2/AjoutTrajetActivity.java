@@ -143,13 +143,13 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
 
                 //Calcul et entrée des infos sur les markers
                 ajoutInfoMarker();
-                Toast.makeText(AjoutTrajetActivity.this, "Marker 0 :" + listeMarqueurs.get(0).getSnippet() + listeMarqueurs.get(1).getSnippet(), Toast.LENGTH_SHORT).show();
 
                 //On enregistre polyline et marqueurs
                 enregistrerTrajet();
 
                 Intent intent = new Intent(AjoutTrajetActivity.this, MainActivity.class);
                 startActivity(intent);
+                voiceOut.speak("Accueil");
             }
         });
 
@@ -376,7 +376,7 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
                         + " mètres, puis tournez à " + information.get(i).intValue() + " heures");
             } else if (i == listeMarqueurs.size() - 2) {
                 listeMarqueurs.get(i).setSnippet("Tournez à " + information.get(i - 1).intValue()
-                        + "heures, marchez sur " + distance.get(i).intValue() + "mètres");
+                        + " heures, marchez sur " + distance.get(i).intValue() + "mètres");
             } else if (i == listeMarqueurs.size() - 1) {
                 listeMarqueurs.get(i).setSnippet("Arrivée");
             }
@@ -608,6 +608,7 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
                 demarrerPosition = true;
+                voiceOut.speak("Début d'enregistrement");
             }
         });
         alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
@@ -619,24 +620,6 @@ public class AjoutTrajetActivity extends SpeechRecognizerActivity implements Map
         });
         alertDialog = alertDialogBuilder.create();
         alertDialog.show();
-
-//        final LayoutInflater layoutInflater = LayoutInflater.from(this);
-//        View promptView = layoutInflater.inflate(R.layout.prompt, null);
-//
-//        final AlertDialog alertD = new AlertDialog.Builder(this).create();
-//
-//        FloatingActionButton btnPlay = (FloatingActionButton) promptView.findViewById(R.id.play);
-//
-//        btnPlay.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                alertD.dismiss();
-//            }
-//        });
-//
-//        alertD.setView(promptView);
-//
-//        alertD.show();
     }
 
     @Override

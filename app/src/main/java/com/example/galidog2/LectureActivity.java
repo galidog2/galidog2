@@ -323,7 +323,8 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
                     voiceOut.speak("Placez-vous sur le point de départ.");
 //                    toast.setText("Placez vous sur le point de départ s'il vous plaît.");
 //                    toast.show();
-                    ModifColorEveil(compteur);
+                    if (distance < accuracyMeters + 4)
+                        ModifColorEveil(compteur);
                 }
             } else {
                 if (!trajet.isCloseTo(locationGeo, accuracyPixels + distanceTrajetPixels, map)) {
@@ -499,7 +500,7 @@ public class LectureActivity extends SpeechRecognizerActivity implements MapEven
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Voulez-vous retourner à l'accueil ? Le trajet sera interrompu définitivement");
         voiceOut.speak("Voulez-vous retourner à l'accueil ? Le trajet sera interrompu définitivement");
-        alertDialogBuilder.setPositiveButton("Accueil", new DialogInterface.OnClickListener() {
+        alertDialogBuilder.setPositiveButton("Valider", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface arg0, int arg1) {
                 Intent intent = new Intent(LectureActivity.this, MainActivity.class);

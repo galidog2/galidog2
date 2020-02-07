@@ -15,7 +15,7 @@ public final class Audictionary {
     //The first String of each list is the standard one to be implemented in activities
 
     //HOME
-    public static final List<String> matchsMemorisation = Collections.unmodifiableList(Arrays.asList("mémorisation", "mémoriser"));
+    public static final List<String> matchsMemorisation = Collections.unmodifiableList(Arrays.asList("mémorisation", "mémoriser", "mémo"));
     public static final List<String> matchsAnnonce= Collections.unmodifiableList(Arrays.asList("bonjour", "indication"));
     public static final List<String> matchsModeNonDispo= Collections.unmodifiableList(Arrays.asList("description", "navigation"));
     public static final List<String> matchsEcran= Collections.unmodifiableList(Arrays.asList("écran"));
